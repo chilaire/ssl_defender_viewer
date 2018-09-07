@@ -2,6 +2,8 @@ import math
 import numpy
 import sys
 
+from geometry import *
+
 class Goal:
     def __init__(self, data):
         mandatory_keys = ["posts", "direction"]
@@ -17,22 +19,11 @@ class Goal:
             raise ValueError("Invalid shape for 'direction': "
                              + str(self.direction.shape) + " expecting (2,)")
 
-    """ Return [shotOnTarget, finalPos] for a kick from 'pos' with direction 'theta' """
+    """ Return None if kick cannot score a goal, otherwise return intersection with the goal """
     def kickResult(self, pos, theta):
         kick_dir = numpy.array([math.cos(theta),math.sin(theta)])
         if (kick_dir.dot(self.direction) <= 0):
-            return [False,pos]
-        # Line-segment intersection from points
-        # https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection#Given_two_points_on_each_line
-        x1 = self.posts[0,0]
-        x2 = self.posts[0,1]
-        y1 = self.posts[1,0]
-        y2 = self.posts[1,1]
-        x3 = pos[0]
-        x4 = x3 + kick_dir[0]
-        y3 = pos[1]
-        y4 = y3 + kick_dir[1]
-        t = ((x1-x3)*(y3-y4)-(y1-y3)*(x3-x4))/((x1-x2)*(y3-y4)-(y1-y2)*(x3-x4))
-        # Intersection is between two points
-        return [0 <= t <= 1, (x1+t*(x2-x1), y1+t*(y2-y1))]
+            return None
+        return segmentLineIntersection(self.posts[:,0], self.posts[:,1],
+                                       pos, pos + kick_dir)
         

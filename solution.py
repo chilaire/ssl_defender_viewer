@@ -14,3 +14,9 @@ class Solution:
             raise ValueError("No opponent found")
         if (self.defenders.shape[0] != 2):
             raise ValueError("Invalid data for defenders")
+
+    def getNbDefenders(self):
+        return self.defenders.shape[1]
+
+    def getDefender(self, opp_id):
+        return self.defenders[:,opp_id]

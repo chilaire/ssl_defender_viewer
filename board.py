@@ -8,7 +8,7 @@ class Board :
     def __init__(self, problem, solution):
         self.problem = problem
         self.solution = solution
-        self.size = numpy.array([640,480])
+        self.size = numpy.array([1280,960])
         self.goal_thickness = 5
         # colors
         self.background_color = (0,0,0)
@@ -16,6 +16,7 @@ class Board :
         self.defender_color = (255,255,0)
         self.goal_color = (255,255,255)
         self.success_color = (0,255,0)
+        self.failure_color = (255,0,0)
 
     """ Return the position of the center of the image """
     def getImgCenter(self):
@@ -41,10 +42,31 @@ class Board :
         pygame.draw.line(screen, color, start, end, thickness)
     
     def drawKickRay(self, screen, robot_pos, kick_dir):
+        # Getting closest goal to score
+        kick_end = None
+        best_dist = None
         for goal in self.problem.goals:
-            shot_on_target, kick_end = goal.kickResult(robot_pos, kick_dir)
-            if shot_on_target:
-                self.drawSegmentInField(screen, self.success_color, robot_pos, kick_end, 1)                
+            kick_result = goal.kickResult(robot_pos, kick_dir)
+            if not kick_result is None:
+                goal_dist = numpy.linalg.norm(robot_pos - kick_result)
+                if best_dist == None or goal_dist < best_dist:
+                    best_dist = goal_dist
+                    kick_end = kick_result
+        if not kick_end is None:
+            # Checking if kick is intercepted by one of the opponent and which one is the first
+            intercepted = False
+            for def_id in range(self.solution.getNbDefenders()):
+                defender = self.solution.getDefender(def_id)
+                collide_point = segmentCircleIntersection(robot_pos, kick_end,
+                                                          defender, self.problem.robot_radius)
+                if not collide_point is None:
+                    kick_end = collide_point
+                    intercepted = True
+            ##### TODO
+            color = self.failure_color
+            if intercepted:
+                color = self.success_color
+            self.drawSegmentInField(screen, color, robot_pos, kick_end, 1)
 
     def drawKickRays(self, screen):
         for opp_id in range(self.problem.getNbOpponents()):
