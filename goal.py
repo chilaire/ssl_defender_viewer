@@ -21,6 +21,7 @@ class Goal:
 
     """ Return None if kick cannot score a goal, otherwise return intersection with the goal """
     def kickResult(self, pos, theta):
+        # Checking that ball is not coming from behind the goal
         kick_dir = numpy.array([math.cos(theta),math.sin(theta)])
         if (kick_dir.dot(self.direction) <= 0):
             return None
