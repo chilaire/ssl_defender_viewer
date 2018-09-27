@@ -4,6 +4,34 @@ import pygame
 from problem import *
 from solution import *
 
+"""
+Src and dst are both matrices of the same size with each column representing a
+different position
+"""
+def maxDist(src, dst):
+    diff = dst - src
+    max_dist = 0
+    for entry in range(diff.shape[1]):
+        dist = numpy.linalg.norm(diff[:,entry])
+        if dist > max_dist:
+            max_dist = dist
+    return max_dist
+
+"""
+Return the position of a robot traveling from 'src' to 'dst' with a budget of 'dist'
+"""
+def interpolatePos(src, dst, dist):
+    diff = dst - src
+    pos = numpy.copy(src)
+    for entry in range(diff.shape[1]):
+        entry_dist = numpy.linalg.norm(diff[:,entry])
+        if dist >= entry_dist:
+            pos[:,entry] = numpy.copy(dst[:,entry])
+        else:
+            pos[:,entry] = src[:,entry] + diff[:,entry] * dist / entry_dist
+    return pos
+    
+
 class Board :
     def __init__(self, problem, solution):
         self.problem = problem
@@ -17,7 +45,26 @@ class Board :
         self.goal_color = (255,255,255)
         self.success_color = (0,255,0)
         self.failure_color = (255,0,0)
+        self.max_dist = None
+        # checking that number of defenders in solution is consistent with problem
+        if (not self.problem.defenders is None):
+            if (self.problem.getNbDefenders() != self.solution.getNbDefenders()):
+                print("Inconsistent number of defenders "
+                      "(Problem: {:d}, Solution: {:d})".format(
+                          self.problem.getNbDefenders(), self.solution.getNbDefenders()))
+                sys.exit(1)
+            self.dist = 0
+            self.max_dist = maxDist(self.problem.defenders, self.solution.defenders)
+            print("Max dist: {:f}".format(self.max_dist))
 
+    """
+    Retrieve the defenders position corresponding to current state
+    """
+    def getDefenders(self):
+        if (self.problem.defenders is None):
+            return self.solution.defenders
+        return interpolatePos(self.problem.defenders, self.solution.defenders, self.dist)
+            
     """ Return the position of the center of the image """
     def getImgCenter(self):
         return self.size / 2
@@ -55,8 +102,9 @@ class Board :
         if not kick_end is None:
             # Checking if kick is intercepted by one of the opponent and which one is the first
             intercepted = False
-            for def_id in range(self.solution.getNbDefenders()):
-                defender = self.solution.getDefender(def_id)
+            defenders = self.getDefenders()
+            for def_id in range(defenders.shape[1]):
+                defender = defenders[:,def_id]
                 collide_point = segmentCircleIntersection(robot_pos, kick_end,
                                                           defender, self.problem.robot_radius)
                 if not collide_point is None:
@@ -92,7 +140,7 @@ class Board :
         self.drawRobots(screen, self.problem.opponents, self.opponent_color)
 
     def drawDefenders(self, screen):
-        self.drawRobots(screen, self.solution.defenders, self.defender_color)
+        self.drawRobots(screen, self.getDefenders(), self.defender_color)
         
     def draw(self, screen):
         self.drawKickRays(screen)
@@ -102,8 +150,10 @@ class Board :
 
     def run(self):
         pygame.init()
+        font = pygame.font.SysFont("Ubuntu Mono", 50)
         screen = pygame.display.set_mode(self.size)
         running = True
+        dynamic = False
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -113,5 +163,17 @@ class Board :
         
             screen.fill(self.background_color)
             self.draw(screen);
+            if (not self.max_dist is None):
+                self.dist += 0.01
+                # Adding a sleep dist to freeze once situation is reached
+                if (self.dist > self.max_dist + 0.5):
+                    self.dist = 0
+                shown_dist = min(self.dist, self.max_dist)
+                text = "Dist: {:f} / {:f}".format(shown_dist,self.max_dist)
+                text_surface = font.render(text, False, (255, 255, 255))
+                text_rect = text_surface.get_rect()
+                text_rect.midtop = (self.size[0] / 2,0)
+                screen.blit(text_surface, text_rect)
+
             pygame.display.flip()
         

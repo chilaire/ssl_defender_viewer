@@ -18,5 +18,5 @@ class Solution:
     def getNbDefenders(self):
         return self.defenders.shape[1]
 
-    def getDefender(self, opp_id):
-        return self.defenders[:,opp_id]
+    def getDefender(self, def_id):
+        return self.defenders[:,def_id]

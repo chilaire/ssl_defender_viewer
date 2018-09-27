@@ -31,6 +31,10 @@ class Problem:
         self.robot_radius = data["robot_radius"]
         self.theta_step = data["theta_step"]
         self.pos_step = data["pos_step"]
+        # Reading optional parameters
+        self.defenders = None
+        if "defenders" in data:
+            self.defenders = numpy.array(data["defenders"]).transpose()
 
     """ Return the position of the center of the field """
     def getFieldCenter(self):
@@ -49,3 +53,11 @@ class Problem:
 
     def getOpponent(self, opp_id):
         return self.opponents[:,opp_id]
+    
+    def getNbDefenders(self):
+        if (self.defenders is None):
+            return 0
+        return self.defenders.shape[1]
+
+    def getDefender(self, def_id):
+        return self.defenders[:,def_id]
