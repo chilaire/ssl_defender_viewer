@@ -162,14 +162,12 @@ class Board :
 
     def checkCollisions(self):
         robots = numpy.concatenate((self.problem.opponents, self.getDefenders()), 1)
-        print(robots)
         min_dist = 2 * self.problem.robot_radius
         if (self.problem.min_dist != None):
             min_dist = self.problem.min_dist
         for r1 in range(robots.shape[1] - 1):
             for r2 in range(r1+1,robots.shape[1]):
                 dist = numpy.linalg.norm(robots[:,r1] - robots[:,r2])
-                print("Dist {:d} to {:d}: {:f}".format(r1,r2,dist))
                 if (dist < min_dist):
                     return True
         return False
@@ -186,22 +184,48 @@ class Board :
             
     def drawStatus(self, screen):
         text = "Success"
-        if self.opponent_can_score or self.collision:
+        if self.opponent_can_score or self.collision or self.goalies_count > 1:
             text = "Failed: "
             if self.opponent_can_score:
                 text += " opponent can score"
             if self.collision:
                 text += " collision detected"
+            if self.goalies_count > 1:
+                text += " {:d} defenders in goal area".format(self.goalies_count)
         text_surface = self.font.render(text, False, (255, 255, 255))
         text_rect = text_surface.get_rect()
         text_rect.midbottom = (self.size[0] / 2,self.size[1])
         screen.blit(text_surface, text_rect)
-        
+
+    def checkGoalArea(self):
+        self.goalies_count = 0
+        if not self.problem.goalkeeper_area is None:
+            limits = self.problem.goalkeeper_area
+            defenders = self.getDefenders()
+            for def_id in range(defenders.shape[1]):
+                x_ok = limits[0,0] <= defenders[0,def_id] <= limits[0,1]
+                y_ok = limits[1,1] <= defenders[1,def_id] <= limits[1,0]
+                if x_ok and y_ok:
+                    self.goalies_count += 1
+
+    def drawGoalArea(self, screen):
+        if not self.problem.goalkeeper_area is None:
+            limits = self.problem.goalkeeper_area
+            top_left = self.getPixelFromField(limits[:,0])
+            bot_right = self.getPixelFromField(limits[:,1])
+            left = top_left[0]
+            top = top_left[1]
+            width = bot_right[0] - top_left[0]
+            height = bot_right[1] - top_left[1]
+            goalkeeper_area = pygame.Rect(left,top, width, height)
+            pygame.draw.rect(screen, (0,0,255), goalkeeper_area)
         
     def draw(self, screen):
         self.opponent_can_score = False
         self.updateDist()
         self.collision = self.checkCollisions()
+        self.checkGoalArea()
+        self.drawGoalArea(screen)
         self.drawKickRays(screen)
         self.drawGoals(screen)
         self.drawOpponents(screen)

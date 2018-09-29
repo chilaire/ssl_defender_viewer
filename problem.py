@@ -39,6 +39,10 @@ class Problem:
         self.min_dist = None
         if "min_dist" in data:
             self.min_dist = data["min_dist"]
+        # Reading optional goal area
+        self.goalkeeper_area = None
+        if "goalkeeper_area" in data:
+            self.goalkeeper_area =numpy.array(data["goalkeeper_area"])
 
     """ Return the position of the center of the field """
     def getFieldCenter(self):
