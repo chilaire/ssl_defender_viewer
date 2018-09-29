@@ -35,6 +35,10 @@ class Problem:
         self.defenders = None
         if "defenders" in data:
             self.defenders = numpy.array(data["defenders"]).transpose()
+        # Reading optional minimal distance
+        self.min_dist = None
+        if "min_dist" in data:
+            self.min_dist = data["min_dist"]
 
     """ Return the position of the center of the field """
     def getFieldCenter(self):

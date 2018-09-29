@@ -87,7 +87,10 @@ class Board :
         start = self.getPixelFromField(pos1)
         end = self.getPixelFromField(pos2)
         pygame.draw.line(screen, color, start, end, thickness)
-    
+
+    """
+    Also updates self.opponent_can_score if kick reaches a goal and is not intercepted
+    """
     def drawKickRay(self, screen, robot_pos, kick_dir):
         # Getting closest goal to score
         kick_end = None
@@ -114,6 +117,8 @@ class Board :
             color = self.failure_color
             if intercepted:
                 color = self.success_color
+            else:
+                self.opponent_can_score = True
             self.drawSegmentInField(screen, color, robot_pos, kick_end, 1)
 
     def drawKickRays(self, screen):
@@ -132,25 +137,81 @@ class Board :
     
     def drawRobots(self, screen, robots, color):
         for robot_id in range(robots.shape[1]):
+            # Drawing robot
             pygame.draw.circle(screen, color,
                                self.getPixelFromField(robots[:, robot_id]),
                                int(self.problem.robot_radius * self.getRatio()))
+            # Drawing minimal distance
+            if (self.problem.min_dist != None):
+                pygame.draw.circle(screen, color,
+                                   self.getPixelFromField(robots[:, robot_id]),
+                                   int(self.problem.min_dist * self.getRatio() / 2), 1)
         
     def drawOpponents(self, screen):
         self.drawRobots(screen, self.problem.opponents, self.opponent_color)
 
     def drawDefenders(self, screen):
         self.drawRobots(screen, self.getDefenders(), self.defender_color)
+
+    def updateDist(self):
+        if (not self.max_dist is None):
+            self.dist += 0.01
+            # Adding a sleep dist to freeze once situation is reached
+            if (self.dist > self.max_dist + 0.5):
+                self.dist = 0
+
+    def checkCollisions(self):
+        robots = numpy.concatenate((self.problem.opponents, self.getDefenders()), 1)
+        print(robots)
+        min_dist = 2 * self.problem.robot_radius
+        if (self.problem.min_dist != None):
+            min_dist = self.problem.min_dist
+        for r1 in range(robots.shape[1] - 1):
+            for r2 in range(r1+1,robots.shape[1]):
+                dist = numpy.linalg.norm(robots[:,r1] - robots[:,r2])
+                print("Dist {:d} to {:d}: {:f}".format(r1,r2,dist))
+                if (dist < min_dist):
+                    return True
+        return False
+                                   
+
+    def drawDist(self, screen):
+        if (not self.max_dist is None):
+            shown_dist = min(self.dist, self.max_dist)
+            text = "Dist: {:f} / {:f}".format(shown_dist,self.max_dist)
+            text_surface = self.font.render(text, False, (255, 255, 255))
+            text_rect = text_surface.get_rect()
+            text_rect.midtop = (self.size[0] / 2,0)
+            screen.blit(text_surface, text_rect)
+            
+    def drawStatus(self, screen):
+        text = "Success"
+        if self.opponent_can_score or self.collision:
+            text = "Failed: "
+            if self.opponent_can_score:
+                text += " opponent can score"
+            if self.collision:
+                text += " collision detected"
+        text_surface = self.font.render(text, False, (255, 255, 255))
+        text_rect = text_surface.get_rect()
+        text_rect.midbottom = (self.size[0] / 2,self.size[1])
+        screen.blit(text_surface, text_rect)
+        
         
     def draw(self, screen):
+        self.opponent_can_score = False
+        self.updateDist()
+        self.collision = self.checkCollisions()
         self.drawKickRays(screen)
         self.drawGoals(screen)
         self.drawOpponents(screen)
         self.drawDefenders(screen)
+        self.drawDist(screen)
+        self.drawStatus(screen)
 
     def run(self):
         pygame.init()
-        font = pygame.font.SysFont("Ubuntu Mono", 50)
+        self.font = pygame.font.SysFont("Ubuntu Mono", 50)
         screen = pygame.display.set_mode(self.size)
         running = True
         dynamic = False
@@ -163,17 +224,6 @@ class Board :
         
             screen.fill(self.background_color)
             self.draw(screen);
-            if (not self.max_dist is None):
-                self.dist += 0.01
-                # Adding a sleep dist to freeze once situation is reached
-                if (self.dist > self.max_dist + 0.5):
-                    self.dist = 0
-                shown_dist = min(self.dist, self.max_dist)
-                text = "Dist: {:f} / {:f}".format(shown_dist,self.max_dist)
-                text_surface = font.render(text, False, (255, 255, 255))
-                text_rect = text_surface.get_rect()
-                text_rect.midtop = (self.size[0] / 2,0)
-                screen.blit(text_surface, text_rect)
 
             pygame.display.flip()
         
