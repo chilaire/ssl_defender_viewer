@@ -30,7 +30,7 @@ def interpolatePos(src, dst, dist):
         else:
             pos[:,entry] = src[:,entry] + diff[:,entry] * dist / entry_dist
     return pos
-    
+
 
 class Board :
     def __init__(self, problem, solution):
@@ -38,6 +38,7 @@ class Board :
         self.solution = solution
         self.size = numpy.array([1280,960])
         self.goal_thickness = 5
+
         # colors
         self.background_color = (0,0,0)
         self.opponent_color = (255,0,255)
@@ -57,6 +58,7 @@ class Board :
             self.max_dist = maxDist(self.problem.defenders, self.solution.defenders)
             print("Max dist: {:f}".format(self.max_dist))
 
+
     """
     Retrieve the defenders position corresponding to current state
     """
@@ -64,7 +66,7 @@ class Board :
         if (self.problem.defenders is None):
             return self.solution.defenders
         return interpolatePos(self.problem.defenders, self.solution.defenders, self.dist)
-            
+
     """ Return the position of the center of the image """
     def getImgCenter(self):
         return self.size / 2
@@ -127,14 +129,14 @@ class Board :
             while kick_dir < 2 * math.pi:
                 self.drawKickRay(screen, self.problem.getOpponent(opp_id), kick_dir)
                 kick_dir += self.problem.theta_step
-            
+
 
     def drawGoals(self, screen):
         for goal in self.problem.goals:
             self.drawSegmentInField(screen, self.goal_color,
                                     goal.posts[:,0], goal.posts[:,1],
                                     self.goal_thickness)
-    
+
     def drawRobots(self, screen, robots, color):
         for robot_id in range(robots.shape[1]):
             # Drawing robot
@@ -146,7 +148,7 @@ class Board :
                 pygame.draw.circle(screen, color,
                                    self.getPixelFromField(robots[:, robot_id]),
                                    int(self.problem.min_dist * self.getRatio() / 2), 1)
-        
+
     def drawOpponents(self, screen):
         self.drawRobots(screen, self.problem.opponents, self.opponent_color)
 
@@ -171,7 +173,7 @@ class Board :
                 if (dist < min_dist):
                     return True
         return False
-                                   
+
 
     def drawDist(self, screen):
         if (not self.max_dist is None):
@@ -181,7 +183,7 @@ class Board :
             text_rect = text_surface.get_rect()
             text_rect.midtop = (self.size[0] / 2,0)
             screen.blit(text_surface, text_rect)
-            
+
     def drawStatus(self, screen):
         text = "Success"
         if self.opponent_can_score or self.collision or self.goalies_count > 1:
@@ -219,7 +221,7 @@ class Board :
             height = bot_right[1] - top_left[1]
             goalkeeper_area = pygame.Rect(left,top, width, height)
             pygame.draw.rect(screen, (0,0,255), goalkeeper_area)
-        
+
     def draw(self, screen):
         self.opponent_can_score = False
         self.updateDist()
@@ -245,9 +247,8 @@ class Board :
                     running=False
             keys=pygame.key.get_pressed()
             if (keys[pygame.K_ESCAPE]): running = False
-        
+
             screen.fill(self.background_color)
             self.draw(screen);
 
             pygame.display.flip()
-        
