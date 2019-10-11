@@ -31,4 +31,19 @@ class createSol :
         d = sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
         return d <= self.problem.robot_radius
 
-    
+    def add(pos, id_shot):
+        (nfound, index) = self.graph.add_pos(pos[0], pos[1], id_shot)
+        neighbours = [] #TODO est-ce qu'on a déjà les entiers à ce point de l'algo ?
+        self.graph.add_pos_adja(index, pos, neighbours)
+
+    def create_graph():
+        for opp_id in range(self.problem.getNbOpponents()):
+            opp_pos = self.problem.getOpponent(opp_id)
+            for theta in range(0,2*pi,self.problem.theta_step) :
+                for goal in self.problem.goals :
+                    kick_result = self.problem.goal.kickResult(opp_pos, theta)
+                    if not kick_result is None:
+                        #graph.add_shot()
+                        pos_to_add = intersept(opp_pos,kick_result)
+                        for pos in pos_to_add :
+                            #graph.add_pos()
