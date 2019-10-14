@@ -93,3 +93,24 @@ class graph :
             (found,index) = find(i,j)
             if found:
                 add_edgePos(ind_pos, index, pos[0], pos[1], k, l)
+
+
+
+"""
+    def remove_vertex_and_neighbours(i,j):
+        (found,index) = find(i,j)
+        if found:
+            for (k,l) in self.adj_pos[index][1] :
+                (found2,index2)=find(k,l)
+                for (kk,ll) in self.adj_pos[index2][1] :
+                    #supprimer l'arrete (kk,ll)->(k,l)
+                for shot in self.adj_pos[index2][2] :
+                    #supprimer l'arrete shot->(k,l)
+                #supprimer ligne (k,l)
+            for shot in self.adj_pos[index][2] :
+                for (kk,ll) in self.shot[shot] :
+                    #supprimer l'arrete (kk,ll)->shot
+                #supprimer ligne shot
+            #supprimer ligne (i,j)
+
+"""
