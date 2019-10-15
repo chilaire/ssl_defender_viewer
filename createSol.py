@@ -22,7 +22,7 @@ class createSol :
                 if inter != None:
                     add = False
                     for i in len(self.problem.opponents[0]):
-                        add = add and not superposition([x,y], [problem.opponents[*][i]]) #not optimal
+                        add = add and not superposition([x,y], [problem.opponents[:][i]]) #not optimal
                     if add:
                         ret.append([x,y])
         return ret
