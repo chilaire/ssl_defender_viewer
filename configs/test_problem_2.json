@@ -1,0 +1,16 @@
+{
+    "field_limits" : [ [-4.0,4.0],[-2.0,2.0] ],
+    "goals" : [
+        {
+            "posts" : [[4.0, -0.1], [4.0,0.1]],
+            "direction" : [-1,0]
+        }
+    ],
+    "opponents" : [
+        [0.0, -1.65],
+        [0.0, 1.65]
+    ],
+    "robot_radius" : 0.4,
+    "theta_step" : 2,
+    "pos_step" : 0.5
+}
