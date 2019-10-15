@@ -96,21 +96,29 @@ class graph :
 
 
 
-"""
+""" Est-ce que par hasard on ne devrait pas stocker ce qu'on enlève ? Histoire de pouvoir remonter...
     def remove_vertex_and_neighbours(i,j):
         (found,index) = find(i,j)
         if found:
-            for (k,l) in self.adj_pos[index][1] :
+            for (k,l) in self.adj_pos[index][2] :
                 (found2,index2)=find(k,l)
-                for (kk,ll) in self.adj_pos[index2][1] :
-                    #supprimer l'arrete (kk,ll)->(k,l)
-                for shot in self.adj_pos[index2][2] :
+                for (kk,ll) in self.adj_pos[index2][2] :
+                    #supprimer l'arrete (kk,ll)->(k,l) (pas opti)
+                    (found3,index3)=find(kk,ll)
+                    self.adj_pos[index2][2] = [(x,y) for (x,y) in self.adj_pos[index2][2] if (x!=k and y!=l)]
+                for shot in self.adj_pos[index2][1] :
                     #supprimer l'arrete shot->(k,l)
+                    self.shot[shot] = [(x,y) for (x,y) in self.shot[shot] if (x!=k and y!=l)]
                 #supprimer ligne (k,l)
-            for shot in self.adj_pos[index][2] :
+                self.adj_pos.pop(index2) # /!\ opération linéaire
+            for shot in self.adj_pos[index][1] :
                 for (kk,ll) in self.shot[shot] :
                     #supprimer l'arrete (kk,ll)->shot
+                    (found4, index4) = find(kk, ll)
+                    self.adj_pos[index4][2] = [(x,y) for (x,y) in self.adj_pos[index4][2] if (x!=kk and y!=ll)]
                 #supprimer ligne shot
+                self.shot.pop(shot) /!\ ARG
             #supprimer ligne (i,j)
+            self.adj_pos.pop(index)
 
 """
