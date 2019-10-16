@@ -11,9 +11,9 @@ class graph :
     """
     def add_pos(self,i, j, id_shot):
         self.shot[id_shot].append((i,j))
-        (found,index) = find(i, j)
+        (found,index) = self.find(i, j)
         if not found:
-            self.adj_pos.insert(i,j)
+            self.adj_pos.insert(index, [(i,j), [], []]) #add True later
         self.adj_pos[index][1].append(id_shot)
         return (not found, index)
 
@@ -54,12 +54,14 @@ class graph :
     """
     Find index of (i, j) pos
     """
-    def find(i, j):
+    def find(self, i, j):
+        if self.adj_pos == []:
+            return (False, 0)
         start = 0
-        end = len(adj_pos)-1
-        if self.adj_pos[start] == (i,j):
+        end = len(self.adj_pos)-1
+        if self.adj_pos[start][0] == (i,j):
             return (True, start)
-        if self.adj_pos[end] == (i,j):
+        if self.adj_pos[end][0] == (i,j):
             return (True, end)
         while start-end > 1:
             middle = (end-start)//2
@@ -90,9 +92,9 @@ class graph :
 
     def add_pos_adja(self,ind_pos, pos, neighbours): #TODO: faire sans liste
         for (k,l) in neighbours:
-            (found,index) = find(i,j)
+            (found,index) = self.find(i,j)
             if found:
-                add_edgePos(ind_pos, index, pos[0], pos[1], k, l)
+                self.add_edgePos(ind_pos, index, pos[0], pos[1], k, l)
 
 
 
