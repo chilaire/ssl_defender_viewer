@@ -10,10 +10,10 @@ class graph :
     return true if we need to check overlapping
     """
     def add_pos(self,i, j, id_shot):
-        self.shot[id_shot].append((i,j))
+        self.shot[id_shot][0].append((i,j))
         (found,index) = self.find(i, j)
         if not found:
-            self.adj_pos.insert(index, [(i,j), [], []]) #add True later
+            self.adj_pos.insert(index, [(i,j), [], [], True])
         self.adj_pos[index][1].append(id_shot)
         return (not found, index)
 
@@ -21,7 +21,7 @@ class graph :
     Creates a shot and returns its index (no edge yet)
     """
     def add_shot(self,): #modified
-        self.shot.append([])
+        self.shot.append(([], True))
         return len(self.shot)-1
 
     """
@@ -91,7 +91,7 @@ class graph :
         adj_pos.append([(i,j), [], []])
         return len(adj_pos)-1
     """
-
+#ici on a des index pour les pos
     def add_pos_adja(self,ind_pos, pos, neighbours): #TODO: faire sans liste
         for (i,j) in neighbours:
             (found,index) = self.find(i,j)
@@ -99,12 +99,29 @@ class graph :
             if found:
                 self.add_edgePos(ind_pos, index, pos[0], pos[1], i, j)
 
+    def convert(self):
+        for index in range(len(self.adj_pos)):
+            (i,j) = self.adj_pos[index][0]
+            for pos in self.adj_pos:
+                for n in pos[1]:
+                    if n == (i,j):
+                        n = index
+            for shot in self.adj_pos[index][2]:
+                for n in shot[0]:
+                    if n == (i,j):
+                        n = index
+
+
+    def get_first_shot(self):
+        for shot in self.shot:
+            if shot[1]:
+                return [id_pos for id_pos in shot[0] if self.adj_pos[id_pos][3]]
+        return None
+
 
 
 """ Est-ce que par hasard on ne devrait pas stocker ce qu'on enleve ? Histoire de pouvoir remonter...
-    def remove_vertex_and_neighbours(i,j):
-        (found,index) = find(i,j)
-        if found:
+    def remove_vertex_and_neighbours(index):
             for (k,l) in self.adj_pos[index][2] :
                 (found2,index2)=find(k,l)
                 for (kk,ll) in self.adj_pos[index2][2] :

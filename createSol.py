@@ -8,6 +8,7 @@ class createSol :
         self.problem = problem
         self.graph = graph()
         self.step = problem.robot_radius / problem.pos_step #pas floor ici
+        self.solution = []
 
     #hyp1 : start_shot and end_shot are real_position (!= grid_position)
     #hyp2 : the shot starts and ends inside the field
@@ -58,3 +59,32 @@ class createSol :
                         for pos in pos_to_add :
                             self.add(pos,id_shot)
                 theta += self.problem.theta_step
+
+
+    def get_solution(self):#TODO:transformer les index en real_position
+        return self.solution
+
+#ici on a des index pour les pos
+    def dom_ind_set(self, k): #appellation non contractuelle
+        #si plus de sommets noirs -> (vrai, S), sinon, le 1er trouvé
+        shot_neighbours = self.graph.get_first_shot()
+        if shot_neighbours is None:
+            return True
+        #si k=0 -> (faux, None)
+        if k==0:
+            self.solution = None
+            return False
+        #choisir v sommet noir :
+        for n in shot_neighbours:
+            self.solution.append(n)
+            self.graph.remove_vertex_and_neighbours(n)
+            if dom_ind_set(k-1):
+                return True
+            else:
+                self.graph.revive_vertex_and_neighbours(n)
+                self.solution.pop()
+        return False
+            #pas de voisins -> FAUX
+            #pour tt voisin vi de v :
+                #enlever vi et ses voisins -> Gi
+            #retourner Vdom_ind_set(self, k) sur Gi
