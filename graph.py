@@ -9,20 +9,20 @@ class graph :
     Adds a position
     return true if we need to check overlapping
     """
-    def add_pos(i, j, id_shot):
-        shot[id_shot].append((i,j))
+    def add_pos(self,i, j, id_shot):
+        self.shot[id_shot].append((i,j))
         (found,index) = find(i, j)
         if not found:
-            adj_pos.insert(i,j)
-        adj_pos[index][1].append(id_shot)
+            self.adj_pos.insert(i,j)
+        self.adj_pos[index][1].append(id_shot)
         return (not found, index)
 
     """
     Creates a shot and returns its index (no edge yet)
     """
-    def add_shot(): #modified
-        shot.append([])
-        return len(shot)-1
+    def add_shot(self,): #modified
+        self.shot.append([])
+        return len(self.shot)-1
 
     """
     Add edge between a shot and a pos
@@ -47,9 +47,9 @@ class graph :
     """
     Add edge between two shots
     """
-    def add_edgePos(index1, index2, i, j, k, l):
-        adj_pos[index1][2].append( (k, l) )
-        adj_pos[index2][2].append( (i, j) )
+    def add_edgePos(self,index1, index2, i, j, k, l):
+        self.adj_pos[index1][2].append( (k, l) )
+        self.adj_pos[index2][2].append( (i, j) )
 
     """
     Find index of (i, j) pos
@@ -57,20 +57,20 @@ class graph :
     def find(i, j):
         start = 0
         end = len(adj_pos)-1
-        if adj_pos[start] == (i,j):
+        if self.adj_pos[start] == (i,j):
             return (True, start)
-        if adj_pos[end] == (i,j):
+        if self.adj_pos[end] == (i,j):
             return (True, end)
         while start-end > 1:
             middle = (end-start)//2
-            if adj_pos[middle][0] == (i,j):
+            if self.adj_pos[middle][0] == (i,j):
                 return (True, middle)
             else:
-                if adj_pos[middle][0][0] < i:
+                if self.adj_pos[middle][0][0] < i:
                     start = middle
-                elif adj_pos[middle][0][0] > i:
+                elif self.adj_pos[middle][0][0] > i:
                     end = middle
-                elif adj_pos[middle][0][1] < j:
+                elif self.adj_pos[middle][0][1] < j:
                     start = middle
                 else:
                     end = middle
@@ -83,12 +83,12 @@ class graph :
     """
     Add pos with empty value for other element
 
-    def insert_pos(i, j):# modified Ben alors, la liste est triée, non mais
+    def insert_pos(i, j):# modified Ben alors, la liste est triee, non mais
         adj_pos.append([(i,j), [], []])
         return len(adj_pos)-1
     """
 
-    def add_pos_adja(ind_pos, pos, neighbours):
+    def add_pos_adja(self,ind_pos, pos, neighbours): #TODO: faire sans liste
         for (k,l) in neighbours:
             (found,index) = find(i,j)
             if found:
@@ -96,7 +96,7 @@ class graph :
 
 
 
-""" Est-ce que par hasard on ne devrait pas stocker ce qu'on enlève ? Histoire de pouvoir remonter...
+""" Est-ce que par hasard on ne devrait pas stocker ce qu'on enleve ? Histoire de pouvoir remonter...
     def remove_vertex_and_neighbours(i,j):
         (found,index) = find(i,j)
         if found:
@@ -110,7 +110,7 @@ class graph :
                     #supprimer l'arrete shot->(k,l)
                     self.shot[shot] = [(x,y) for (x,y) in self.shot[shot] if (x!=k and y!=l)]
                 #supprimer ligne (k,l)
-                self.adj_pos.pop(index2) # /!\ opération linéaire
+                self.adj_pos.pop(index2) # /!\ operation lineaire
             for shot in self.adj_pos[index][1] :
                 for (kk,ll) in self.shot[shot] :
                     #supprimer l'arrete (kk,ll)->shot

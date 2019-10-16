@@ -14,5 +14,6 @@ with open(problem_path) as problem_file:
 
 s = createSol(problem)
 s.create_graph()
+print(s.graph.adj_pos)
 
 sys.exit()
