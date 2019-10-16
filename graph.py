@@ -59,12 +59,14 @@ class graph :
             return (False, 0)
         start = 0
         end = len(self.adj_pos)-1
+        if self.adj_pos[end][0] < (i,j):
+            return (False, end+1)
         if self.adj_pos[start][0] == (i,j):
             return (True, start)
         if self.adj_pos[end][0] == (i,j):
             return (True, end)
-        while start-end > 1:
-            middle = (end-start)//2
+        while end-start > 1:
+            middle = start + (end-start)//2
             if self.adj_pos[middle][0] == (i,j):
                 return (True, middle)
             else:
@@ -91,10 +93,11 @@ class graph :
     """
 
     def add_pos_adja(self,ind_pos, pos, neighbours): #TODO: faire sans liste
-        for (k,l) in neighbours:
+        for (i,j) in neighbours:
             (found,index) = self.find(i,j)
+            #print("pos : ", ind_pos, ", ", pos, " ; vois : ", index, ", ", i, ", ", j, "\n\n")
             if found:
-                self.add_edgePos(ind_pos, index, pos[0], pos[1], k, l)
+                self.add_edgePos(ind_pos, index, pos[0], pos[1], i, j)
 
 
 

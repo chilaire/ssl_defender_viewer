@@ -38,9 +38,9 @@ class createSol :
         (need_to_check_neighbours, index) = self.graph.add_pos(pos[0], pos[1], id_shot)
         if need_to_check_neighbours :
             neighbours = []
-            for k in range (floor(2*self.step)):
-                for l in range (floor(2*self.step)):
-                    if k*k+l*l<= 4*self.step*self.step:
+            for k in range (floor(-2*self.step), floor(2*self.step)): # -floor or floor(-)?
+                for l in range (floor(-2*self.step), floor(2*self.step)):
+                    if (k!=0 or l!=0) and k*k+l*l<= 4*self.step*self.step:
                         neighbours.append((k+pos[0],l+pos[1]))
             self.graph.add_pos_adja(index, pos, neighbours)
 
