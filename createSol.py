@@ -9,6 +9,7 @@ class createSol :
         self.graph = graph()
         self.step = problem.robot_radius / problem.pos_step #pas floor ici
         self.solution = []
+        self.solutionsList = []
 
     #hyp1 : start_shot and end_shot are real_position (!= grid_position)
     #hyp2 : the shot starts and ends inside the field
@@ -70,24 +71,23 @@ class createSol :
         #si plus de sommets noirs -> (vrai, S), sinon, le 1er trouvé
         shot_neighbours = self.graph.get_first_shot()
         if shot_neighbours is None:
-            return True
+            self.solutionsList.append([x for x in self.solution])
+            return
         #si k=0 -> (faux, None)
         if k==0:
-            return False
+            return
         #choisir v sommet noir :
         for n in shot_neighbours:
             (i,j) = self.graph.adj_pos[n][0]
             (x,y) = (i*self.problem.pos_step,j*self.problem.pos_step)
             self.solution.append((x,y))
             self.graph.remove_vertex_and_neighbours(n,k)
-            if self.dom_ind_set(k-1):
-                return True
-            else:
-                self.graph.revive_vertex_and_neighbours(n,k)
-                self.solution.pop()
+            self.dom_ind_set(k-1)
+            self.graph.revive_vertex_and_neighbours(n,k)
+            self.solution.pop()
 
 
-        return False
+        return
             #pas de voisins -> FAUX
             #pour tt voisin vi de v :
                 #enlever vi et ses voisins -> Gi
