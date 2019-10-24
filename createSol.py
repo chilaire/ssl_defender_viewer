@@ -63,11 +63,20 @@ class createSol :
         self.graph.convert()
 
 
-    def get_solution(self):#TODO:transformer les index en real_position
-        return self.solution
+    def get_solution(self):
+        if self.solutionsList == [] :
+            return None
+        minlen = len(self.solutionsList[0])
+        self.solution = self.solutionsList[0]
+        for sol in self.solutionsList:
+            if len(sol)<minlen :
+                self.solution = sol
+                minlen = len(sol)
+        return [[x,y] for (x,y) in self.solution]
 
 #ici on a des index pour les pos
-    def dom_ind_set(self, k): #appellation non contractuelle
+    def dom_ind_set(self, k):
+         #appellation non contractuelle
         #si plus de sommets noirs -> (vrai, S), sinon, le 1er trouvé
         shot_neighbours = self.graph.get_first_shot()
         if shot_neighbours is None:
@@ -85,8 +94,6 @@ class createSol :
             self.dom_ind_set(k-1)
             self.graph.revive_vertex_and_neighbours(n,k)
             self.solution.pop()
-
-
         return
             #pas de voisins -> FAUX
             #pour tt voisin vi de v :

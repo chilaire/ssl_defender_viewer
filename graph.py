@@ -136,11 +136,11 @@ class graph :
 
     def revive_vertex_and_neighbours(self,index, turn):
         self.adj_pos[index][3] = -1
-        for p in range(len(self.adj_pos[index][2])):
+        for p in self.adj_pos[index][2] :
             pos = self.adj_pos[p]
             if (pos[3] == turn) :
                 pos[3] = -1
-        for s in range(len(self.adj_pos[index][1])) :
+        for s in self.adj_pos[index][1] :
             shot = self.shot[s]
             if shot[1] == turn :
                 shot[1] = -1

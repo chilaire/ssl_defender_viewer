@@ -14,9 +14,6 @@ with open(problem_path) as problem_file:
 
 s = createSol(problem)
 s.create_graph()
-print(s.graph.adj_pos)
-print("------------------------------------------")
-print(s.graph.shot)
-s.dom_ind_set(3)
-print(s.solutionsList)
+s.dom_ind_set(len(s.problem.opponents[0]))
+print("solution :",s.get_solution())
 sys.exit()
