@@ -117,13 +117,36 @@ class graph :
 
     def get_first_shot(self):
         for shot in self.shot:
-            if shot[1]:
-                return [id_pos for id_pos in shot[0] if self.adj_pos[id_pos][3]]
+            if (shot[1] < 0) :
+                return [id_pos for id_pos in shot[0] if (self.adj_pos[id_pos][3] < 0)]
         return None
 
 
 
-""" Est-ce que par hasard on ne devrait pas stocker ce qu'on enleve ? Histoire de pouvoir remonter...
+    def remove_vertex_and_neighbours(self,index, turn):
+        self.adj_pos[index][3] = turn
+        for p in range(len(self.adj_pos[index][2])):
+            pos = self.adj_pos[p]
+            if (pos[3] < 0) :
+                pos[3] = turn
+        for s in range(len(self.adj_pos[index][1])) :
+            shot = self.shot[s]
+            if shot[1] < 0 :
+                shot[1] = turn
+
+    def revive_vertex_and_neighbours(self,index, turn):
+        self.adj_pos[index][3] = -1
+        for p in range(len(self.adj_pos[index][2])):
+            pos = self.adj_pos[p]
+            if (pos[3] == turn) :
+                pos[3] = -1
+        for s in range(len(self.adj_pos[index][1])) :
+            shot = self.shot[s]
+            if shot[1] == turn :
+                shot[1] = -1
+
+'''
+# Est-ce que par hasard on ne devrait pas stocker ce qu'on enleve ? Histoire de pouvoir remonter...
     def remove_vertex_and_neighbours(index):
             for (k,l) in self.adj_pos[index][2] :
                 (found2,index2)=find(k,l)
@@ -142,8 +165,7 @@ class graph :
                     (found4, index4) = find(kk, ll)
                     self.adj_pos[index4][2] = [(x,y) for (x,y) in self.adj_pos[index4][2] if (x!=kk and y!=ll)]
                 #supprimer ligne shot
-                self.shot.pop(shot) /!\ ARG
+                self.shot.pop(shot)
             #supprimer ligne (i,j)
             self.adj_pos.pop(index)
-
-"""
+'''

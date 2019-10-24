@@ -64,7 +64,7 @@ class createSol :
 
     def get_solution(self):#TODO:transformer les index en real_position
         return self.solution
-'''
+
 #ici on a des index pour les pos
     def dom_ind_set(self, k): #appellation non contractuelle
         #si plus de sommets noirs -> (vrai, S), sinon, le 1er trouvé
@@ -73,20 +73,19 @@ class createSol :
             return True
         #si k=0 -> (faux, None)
         if k==0:
-            self.solution = None
             return False
         #choisir v sommet noir :
         for n in shot_neighbours:
             self.solution.append(n)
-            self.graph.remove_vertex_and_neighbours(n)
-            if dom_ind_set(k-1):
+            self.graph.remove_vertex_and_neighbours(n,k)
+            if self.dom_ind_set(k-1):
                 return True
             else:
-                self.graph.revive_vertex_and_neighbours(n)
+                self.graph.revive_vertex_and_neighbours(n,k)
                 self.solution.pop()
+
         return False
             #pas de voisins -> FAUX
             #pour tt voisin vi de v :
                 #enlever vi et ses voisins -> Gi
             #retourner Vdom_ind_set(self, k) sur Gi
-'''

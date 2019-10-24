@@ -16,5 +16,6 @@ s = createSol(problem)
 s.create_graph()
 print(s.graph.adj_pos)
 print(s.graph.shot)
-
+s.dom_ind_set(3)
+print(s.solution)
 sys.exit()
