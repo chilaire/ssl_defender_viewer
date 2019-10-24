@@ -2,14 +2,14 @@
     "field_limits" : [ [-4.0,4.0],[-2.0,2.0] ],
     "goals" : [
         {
-            "posts" : [[4.0, -0.1], [4.0,0.1]],
+            "posts" : [[4.0, -0.2], [4.0,0.2]],
             "direction" : [-1,0]
         }
     ],
     "opponents" : [
         [0.0, 0.0]
     ],
-    "robot_radius" : 0.1,
-    "theta_step" : 1.6,
-    "pos_step" : 0.5
+    "robot_radius" : 1,
+    "theta_step" : 0.1,
+    "pos_step" : 1
 }
