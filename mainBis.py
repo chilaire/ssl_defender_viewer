@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import json
 import sys
+import pygame
 
 from createSol import *
 
@@ -19,4 +20,17 @@ print("------------------------------------------")
 print(s.graph.shot)
 s.dom_ind_set(3)
 print(s.solutionsList)
+
+"""Convert to json
+x = {
+    "defenders" = [[x,y] for (x,y) in s.get_solution()]
+}
+
+solution = Solution(json.load(x))
+
+b = Board(problem, solution)
+
+b.run()
+"""
+
 sys.exit()
