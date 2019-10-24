@@ -125,11 +125,11 @@ class graph :
 
     def remove_vertex_and_neighbours(self,index, turn):
         self.adj_pos[index][3] = turn
-        for p in range(len(self.adj_pos[index][2])):
+        for p in self.adj_pos[index][2]:
             pos = self.adj_pos[p]
             if (pos[3] < 0) :
                 pos[3] = turn
-        for s in range(len(self.adj_pos[index][1])) :
+        for s in self.adj_pos[index][1] :
             shot = self.shot[s]
             if shot[1] < 0 :
                 shot[1] = turn

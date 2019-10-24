@@ -76,13 +76,16 @@ class createSol :
             return False
         #choisir v sommet noir :
         for n in shot_neighbours:
-            self.solution.append(n)
+            (i,j) = self.graph.adj_pos[n][0]
+            (x,y) = (i*self.problem.pos_step,j*self.problem.pos_step)
+            self.solution.append((x,y))
             self.graph.remove_vertex_and_neighbours(n,k)
             if self.dom_ind_set(k-1):
                 return True
             else:
                 self.graph.revive_vertex_and_neighbours(n,k)
                 self.solution.pop()
+
 
         return False
             #pas de voisins -> FAUX
