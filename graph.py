@@ -13,7 +13,7 @@ class graph :
         self.shot[id_shot][0].append((i,j))
         (found,index) = self.find(i, j)
         if not found:
-            self.adj_pos.insert(index, [(i,j), [], [], True])
+            self.adj_pos.insert(index, [(i,j), [], [], -1])
         self.adj_pos[index][1].append(id_shot)
         return (not found, index)
 
@@ -21,7 +21,7 @@ class graph :
     Creates a shot and returns its index (no edge yet)
     """
     def add_shot(self,): #modified
-        self.shot.append(([], True))
+        self.shot.append([[], -1])
         return len(self.shot)-1
 
     """
@@ -102,14 +102,17 @@ class graph :
     def convert(self):
         for index in range(len(self.adj_pos)):
             (i,j) = self.adj_pos[index][0]
-            for pos in self.adj_pos:
-                for n in pos[1]:
-                    if n == (i,j):
-                        n = index
-            for shot in self.adj_pos[index][2]:
-                for n in shot[0]:
-                    if n == (i,j):
-                        n = index
+            for p in range(len(self.adj_pos)):
+                pos = self.adj_pos[p]
+                for k in range(len(pos[2])):
+                    if pos[2][k] == (i,j):
+                        pos[2][k] = index
+            for s in self.adj_pos[index][1]:
+                shot = self.shot[s]
+                for k in range(len(shot[0])):
+                    if shot[0][k] == (i,j):
+                        shot[0][k] = index
+
 
 
     def get_first_shot(self):

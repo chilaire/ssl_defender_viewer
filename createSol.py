@@ -59,11 +59,12 @@ class createSol :
                         for pos in pos_to_add :
                             self.add(pos,id_shot)
                 theta += self.problem.theta_step
+        self.graph.convert()
 
 
     def get_solution(self):#TODO:transformer les index en real_position
         return self.solution
-
+'''
 #ici on a des index pour les pos
     def dom_ind_set(self, k): #appellation non contractuelle
         #si plus de sommets noirs -> (vrai, S), sinon, le 1er trouvé
@@ -88,3 +89,4 @@ class createSol :
             #pour tt voisin vi de v :
                 #enlever vi et ses voisins -> Gi
             #retourner Vdom_ind_set(self, k) sur Gi
+'''
