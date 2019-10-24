@@ -27,6 +27,7 @@ class createSol :
                     add = True
                     for k in range(len(self.problem.opponents[0])):
                         add = add and not self.superposition([x,y], [self.problem.opponents[0][k], self.problem.opponents[1][k]]) #not optimal
+                        #TODO intersect poteau d((x,y),(xp,yp))<r
                     if add:
                         ret.append([i,j])
         return ret
@@ -66,16 +67,11 @@ class createSol :
     def get_solution(self):
         if self.solutionsList == [] :
             return None
-        minlen = len(self.solutionsList[0])
         self.solution = self.solutionsList[0]
-        for sol in self.solutionsList:
-            if len(sol)<minlen :
-                self.solution = sol
-                minlen = len(sol)
         return [[x,y] for (x,y) in self.solution]
 
 #ici on a des index pour les pos
-    def dom_ind_set(self, k):
+    def dom_ind_set(self, k): #TODO:remetre bool et enlever liste
          #appellation non contractuelle
         #si plus de sommets noirs -> (vrai, S), sinon, le 1er trouvé
         shot_neighbours = self.graph.get_first_shot()
