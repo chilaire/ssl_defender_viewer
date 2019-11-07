@@ -121,6 +121,34 @@ class graph :
                 return [id_pos for id_pos in shot[0] if (self.adj_pos[id_pos][3] < 0)]
         return None
 
+    def get_heuristic_pos(self):
+        nb_pos_min = math.inf
+        best_shot = None
+        for shot in self.shot:
+            if shot[1] == -1:
+                len_nei = 0
+                pos = None
+                for n in shot[0]:
+                    if self.adj_pos[n][3] == -1:
+                        len_nei += 1
+                        pos = n
+                if len_nei == 0:
+                    return (None, True)
+                elif len_nei == 1:
+                    return (pos, True)
+                elif len_nei < nb_pos_min:
+                    best_shot = shot
+        best_pos = None
+        nb_shots_max = 0
+        for n in best_shot[0]:
+            nb_shots = 0
+            for s in self.adj_pos[n][1]:
+                if self.shots[s][1] == -1:
+                    nb_shots += 1
+            if nb_shots > nb_shots_max:
+                best_pos = n
+                nb_shots_max = nb_shots
+        return (best_pos, True)
 
 
     def remove_vertex_and_neighbours(self,index, turn):
