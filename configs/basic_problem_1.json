@@ -13,5 +13,5 @@
     ],
     "robot_radius" : 0.09,
     "theta_step" : 0.031416,
-    "pos_step" : 0.205
+    "pos_step" : 0.21
 }

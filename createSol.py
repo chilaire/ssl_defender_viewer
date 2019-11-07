@@ -9,7 +9,6 @@ class createSol :
         self.graph = graph()
         self.step = problem.robot_radius / problem.pos_step #pas floor ici
         self.solution = []
-        self.solutionsList = []
 
     #hyp1 : start_shot and end_shot are real_position (!= grid_position)
     #hyp2 : the shot starts and ends inside the field
@@ -27,7 +26,13 @@ class createSol :
                     add = True
                     for k in range(len(self.problem.opponents[0])):
                         add = add and not self.superposition([x,y], [self.problem.opponents[0][k], self.problem.opponents[1][k]]) #not optimal
-                        #TODO intersect poteau d((x,y),(xp,yp))<r
+                        for goal in self.problem.goals:
+                            x1 = goal.posts[0][0]
+                            y1 = goal.posts[1][0]
+                            x2 = goal.posts[0][1]
+                            y2 = goal.posts[1][1]
+                            add = add and not (sqrt((x - x1)**2 + (y - y1)**2) < self.problem.robot_radius)
+                            add = add and not (sqrt((x - x2)**2 + (y - y2)**2) < self.problem.robot_radius)
                     if add:
                         ret.append([i,j])
         return ret
@@ -65,32 +70,30 @@ class createSol :
 
 
     def get_solution(self):
-        if self.solutionsList == [] :
+        if self.solution == []:
             return None
-        self.solution = self.solutionsList[0]
-        return [[x,y] for (x,y) in self.solution]
+        return [[x*self.problem.pos_step,y*self.problem.pos_step] for (x,y) in self.solution]
 
 #ici on a des index pour les pos
-    def dom_ind_set(self, k): #TODO:remetre bool et enlever liste
+    def dom_ind_set(self, k): 
          #appellation non contractuelle
         #si plus de sommets noirs -> (vrai, S), sinon, le 1er trouvé
         shot_neighbours = self.graph.get_first_shot()
         if shot_neighbours is None:
-            self.solutionsList.append([x for x in self.solution])
-            return
+            return True
         #si k=0 -> (faux, None)
         if k==0:
-            return
+            return False
         #choisir v sommet noir :
         for n in shot_neighbours:
             (i,j) = self.graph.adj_pos[n][0]
-            (x,y) = (i*self.problem.pos_step,j*self.problem.pos_step)
-            self.solution.append((x,y))
+            self.solution.append((i,j))
             self.graph.remove_vertex_and_neighbours(n,k)
-            self.dom_ind_set(k-1)
+            if self.dom_ind_set(k-1) :
+                return True
             self.graph.revive_vertex_and_neighbours(n,k)
             self.solution.pop()
-        return
+        return False
             #pas de voisins -> FAUX
             #pour tt voisin vi de v :
                 #enlever vi et ses voisins -> Gi
