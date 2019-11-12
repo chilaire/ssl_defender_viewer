@@ -128,7 +128,9 @@ class createSol :
         return False
 
 
-
+    """
+    appoximmate Algoritme
+    """
     def dom_ind_set_glouton(self, k):
         #we get the best position with the heuristic
         #       and a bool that says if there is a shot to dominates
