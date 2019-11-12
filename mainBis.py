@@ -17,10 +17,9 @@ with open(problem_path) as problem_file:
 
 s = createSol(problem)
 s.create_graph()
-for k in range(1,len(s.problem.opponents[0])+2):
+for k in range(1,len(s.problem.opponents[0])*2+1):
     print(k)
-    s.dom_ind_set(k)
-    if (s.get_solution() != None):
+    if s.dom_ind_set_glouton(k):
         break
 
 solutionPb = s.get_solution()

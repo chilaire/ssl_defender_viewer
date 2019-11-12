@@ -7,9 +7,21 @@ class createSol :
     def __init__(self, problem):
         self.problem = problem
         self.graph = graph()
-        self.step = problem.robot_radius / problem.pos_step #pas floor ici
+        self.step = problem.robot_radius / problem.pos_step
         self.solution = []
 
+    """
+    check if two position overlaps (real_position)
+    """
+    def overlaps(self, pos1, pos2):
+        d = sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
+        return d <= 2*self.problem.robot_radius
+
+
+    """
+    Gets all the positions that intercepts a shot ()= segment from start_shot to end_shot)
+    Returns a list of [i,j] that are grid_position
+    """
     #hyp1 : start_shot and end_shot are real_position (!= grid_position)
     #hyp2 : the shot starts and ends inside the field
     def intercept(self, start_shot, end_shot):
@@ -25,7 +37,7 @@ class createSol :
                 if inter is not None:
                     add = True
                     for k in range(len(self.problem.opponents[0])):
-                        add = add and not self.superposition([x,y], [self.problem.opponents[0][k], self.problem.opponents[1][k]]) #not optimal
+                        add = add and not self.overlaps([x,y], [self.problem.opponents[0][k], self.problem.opponents[1][k]]) #not optimal
                         for goal in self.problem.goals:
                             x1 = goal.posts[0][0]
                             y1 = goal.posts[1][0]
@@ -37,23 +49,26 @@ class createSol :
                         ret.append([i,j])
         return ret
 
-    #real_positions
-    def superposition(self, pos1, pos2):
-        d = sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
-        return d <= 2*self.problem.robot_radius
-
+    """
+    Adds a position  pos (grid_position) as neighbour of a shot in the graph.
+    find all the position that could overlaps pos, to treat the case of overlapping
+    (if two position overlaps, they are neighbour).
+    """
     def add(self, pos, id_shot):
-        (need_to_check_neighbours, index) = self.graph.add_pos(pos[0], pos[1], id_shot)
-        if need_to_check_neighbours :
+        (need_to_treat_overlapping, index) = self.graph.add_pos(pos[0], pos[1], id_shot)
+        if need_to_treat_overlapping :
             neighbours = []
-            for k in range (floor(-2*self.step), floor(2*self.step)): # -floor or floor(-)?
+            for k in range (floor(-2*self.step), floor(2*self.step)):
                 for l in range (floor(-2*self.step), floor(2*self.step)):
                     if (k!=0 or l!=0) and k*k+l*l<= 4*self.step*self.step:
                         neighbours.append((k+pos[0],l+pos[1]))
             self.graph.add_pos_adja(index, pos, neighbours)
 
-
+    """
+    Creates the graph.
+    """
     def create_graph(self):
+        #we find all the shot drawn by opponents that might strike
         for opp_id in range(self.problem.getNbOpponents()):
             opp_pos = self.problem.getOpponent(opp_id)
             theta = 0
@@ -61,30 +76,45 @@ class createSol :
                 for goal in self.problem.goals :
                     kick_result = goal.kickResult(opp_pos, theta)
                     if not kick_result is None:
+                        # we add in G a shot-vertex, and a pos-vertex for each position that intercept the shot
                         id_shot = self.graph.add_shot()
                         pos_to_add = self.intercept(opp_pos,kick_result)
                         for pos in pos_to_add :
                             self.add(pos,id_shot)
                 theta += self.problem.theta_step
+        #now that G is finished and sorted, we convert the list of adjacencies
         self.graph.convert()
 
-
+    """
+    Gets the solution found
+    Covert the solution in real_position
+    """
     def get_solution(self):
         if self.solution == []:
             return None
         return [[x*self.problem.pos_step,y*self.problem.pos_step] for (x,y) in self.solution]
 
-#ici on a des index pour les pos
-    def dom_ind_set(self, k): 
-         #appellation non contractuelle
-        #si plus de sommets noirs -> (vrai, S), sinon, le 1er trouvé
-        shot_neighbours = self.graph.get_first_shot()
+
+    """
+    Exact Algoritme :
+    Finds an independent set of pos-vertices that dominates the shot-vertices
+    returns true and sets the solution with the index of the vertices in the solution if it finds it
+            false and set the solution empty otherwise
+    """
+#here the adjacencies list are index
+    def dom_ind_set(self, k):
+        #if there is no more shot-vertex -> we have found the solution S -> True
+        #else, we start from the neighbourhood of the first shot-vertex found
+        shot_neighbours = self.graph.get_first_shot_neighbourhood()
         if shot_neighbours is None:
             return True
-        #si k=0 -> (faux, None)
+        #if k=0, no more defender to protect the shot found -> FALSE
         if k==0:
             return False
-        #choisir v sommet noir :
+        #for each neighbour ui of v :
+            #Gi = G\{ vi and its neighbours (pos and shot)}
+        #we stop at the first vi where dom_ind_set(k-1) on Gi is true
+        #   -> we can construct S with vi in S -> TRUE
         for n in shot_neighbours:
             (i,j) = self.graph.adj_pos[n][0]
             self.solution.append((i,j))
@@ -93,8 +123,27 @@ class createSol :
                 return True
             self.graph.revive_vertex_and_neighbours(n,k)
             self.solution.pop()
+        #no neighbour or none can be in S
+        #   -> impossible to find S -> FALSE
         return False
-            #pas de voisins -> FAUX
-            #pour tt voisin vi de v :
-                #enlever vi et ses voisins -> Gi
-            #retourner Vdom_ind_set(self, k) sur Gi
+
+
+
+    def dom_ind_set_glouton(self, k):
+        #we get the best position with the heuristic
+        #       and a bool that says if there is a shot to dominates
+        (best_pos,found_shot) = self.graph.get_heuristic_pos()
+        if not found_shot : #no shot to cover anymore => found S
+            return True
+        if k==0:
+            return False
+        if best_pos == None :#there is a shot but no position can protect it => fail
+            return False
+        (i,j) = self.graph.adj_pos[best_pos][0]
+        self.solution.append((i,j))
+        self.graph.remove_vertex_and_neighbours(best_pos,k)
+        if self.dom_ind_set_glouton(k-1) :
+            return True
+        self.graph.revive_vertex_and_neighbours(best_pos,k)
+        self.solution.pop()
+        return False

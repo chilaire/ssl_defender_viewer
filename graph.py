@@ -2,13 +2,20 @@ import math
 
 class graph :
     def __init__(self):
-        self.adj_pos    = []
-        self.shot       = []
+        self.adj_pos    = [] #liste de [(i,j),[shot neighbourhood (index)],[pos neighbourhood ((i',j') then index)],"removed at round k"]
+        self.shot       = []#liste de [[pos neighbourhood ((i',j') then index)],"removed at round k"]
+
+
+        #########################################################
+        ### [pos neighbourhood] is a list of position (i',j') ###
+        #########################################################
 
     """
-    Adds a position
-    return true if we need to check overlapping
+    Adds a position in the sorted grah's adjacency list if it is not already in the graph
+    return true if we need to treat the overlapping, false otherwise
+    and the index of the pos in the graph
     """
+    #if the position was already in the graph, the overlapping has already been treated
     def add_pos(self,i, j, id_shot):
         self.shot[id_shot][0].append((i,j))
         (found,index) = self.find(i, j)
@@ -24,35 +31,18 @@ class graph :
         self.shot.append([[], -1])
         return len(self.shot)-1
 
-    """
-    Add edge between a shot and a pos
-
-    def add_edgeShot(id_shot, i, j): #en fait pas besoin
-        index = find(i, j)
-        adj_pos[index][1].add(id_shot)
-    """
 
     """
-    Check if two positions are overlapping
-    i,j first pos
-    k,l second pos
-    r radius of the robot
-
-    def check_near(i, j, k, l, r):
-        dist = math.sqrt((k - i)**2 + (l - j)**2)
-        if(dist < r):
-            return False
-        return True
-    """
-    """
-    Add edge between two shots
+    Add edge between two positions
     """
     def add_edgePos(self,index1, index2, i, j, k, l):
         self.adj_pos[index1][2].append( (k, l) )
         self.adj_pos[index2][2].append( (i, j) )
 
     """
-    Find index of (i, j) pos
+    Find the index of the pos (i,j)
+    Returns true and its index if the pos is already in the graph
+            false and the position where it should be inserted
     """
     def find(self, i, j):
         if self.adj_pos == []:
@@ -79,26 +69,23 @@ class graph :
                 else:
                     end = middle
         return (False, end)
-        """for k in range(len(adj_pos)):
-            if( adj_pos[k][0] == (i, j)): #Tuple comparaison
-                return k
-        return -1 #not in list"""
 
     """
-    Add pos with empty value for other element
-
-    def insert_pos(i, j):# modified Ben alors, la liste est triee, non mais
-        adj_pos.append([(i,j), [], []])
-        return len(adj_pos)-1
+    Add an edge between a position and each potentiel neighbours
     """
-#ici on a des index pour les pos
     def add_pos_adja(self,ind_pos, pos, neighbours): #TODO: faire sans liste
         for (i,j) in neighbours:
             (found,index) = self.find(i,j)
-            #print("pos : ", ind_pos, ", ", pos, " ; vois : ", index, ", ", i, ", ", j, "\n\n")
             if found:
                 self.add_edgePos(ind_pos, index, pos[0], pos[1], i, j)
 
+
+
+
+
+    """
+    Converts the adjacency lists of position (initially list of (i',j')) in a list of index
+    """
     def convert(self):
         for index in range(len(self.adj_pos)):
             (i,j) = self.adj_pos[index][0]
@@ -115,12 +102,30 @@ class graph :
 
 
 
-    def get_first_shot(self):
+
+
+
+        #########################################################
+        ### [pos neighbourhood] is a list of index of position###
+        #########################################################
+
+    """
+    Gets the neighbourhood (position not removed) of the first not removed shot.
+    Returns the neighbourhood or None if no shot is found
+    """
+    def get_first_shot_neighbourhood(self):
         for shot in self.shot:
             if (shot[1] < 0) :
                 return [id_pos for id_pos in shot[0] if (self.adj_pos[id_pos][3] < 0)]
         return None
 
+    """
+    Gets the position with the more shot-neighbours, neighbour of the shot with fewer neighbours
+    (considering only non removed elements).
+    Returns (position,True) if the position is found
+            (None, True) if a shot with no neighbour is found
+            (None, False) if no shot is found
+    """
     def get_heuristic_pos(self):
         nb_pos_min = math.inf
         best_shot = None
@@ -138,19 +143,24 @@ class graph :
                     return (pos, True)
                 elif len_nei < nb_pos_min:
                     best_shot = shot
+        if best_shot == None :
+            return (None, False)
         best_pos = None
         nb_shots_max = 0
         for n in best_shot[0]:
             nb_shots = 0
             for s in self.adj_pos[n][1]:
-                if self.shots[s][1] == -1:
+                if self.shot[s][1] == -1:
                     nb_shots += 1
             if nb_shots > nb_shots_max:
                 best_pos = n
                 nb_shots_max = nb_shots
         return (best_pos, True)
 
-
+    """
+        Removes the pos-vertex at the index "index" and all its pos-neighbours at the turn "turn"
+        Sets the component 3 (which says if the vertex is dead or alive) of the vertices at turn if they are alive
+    """
     def remove_vertex_and_neighbours(self,index, turn):
         self.adj_pos[index][3] = turn
         for p in self.adj_pos[index][2]:
@@ -162,6 +172,11 @@ class graph :
             if shot[1] < 0 :
                 shot[1] = turn
 
+
+    """
+        Removes the pos-vertex at the index "index" and all its pos-neighbours at the turn "turn"
+        Sets the component 3 (which says if the vertex is dead or alive) of the vertices at -1 if it has been kill at turn turn
+    """
     def revive_vertex_and_neighbours(self,index, turn):
         self.adj_pos[index][3] = -1
         for p in self.adj_pos[index][2] :
@@ -172,28 +187,3 @@ class graph :
             shot = self.shot[s]
             if shot[1] == turn :
                 shot[1] = -1
-
-'''
-# Est-ce que par hasard on ne devrait pas stocker ce qu'on enleve ? Histoire de pouvoir remonter...
-    def remove_vertex_and_neighbours(index):
-            for (k,l) in self.adj_pos[index][2] :
-                (found2,index2)=find(k,l)
-                for (kk,ll) in self.adj_pos[index2][2] :
-                    #supprimer l'arrete (kk,ll)->(k,l) (pas opti)
-                    (found3,index3)=find(kk,ll)
-                    self.adj_pos[index2][2] = [(x,y) for (x,y) in self.adj_pos[index2][2] if (x!=k and y!=l)]
-                for shot in self.adj_pos[index2][1] :
-                    #supprimer l'arrete shot->(k,l)
-                    self.shot[shot] = [(x,y) for (x,y) in self.shot[shot] if (x!=k and y!=l)]
-                #supprimer ligne (k,l)
-                self.adj_pos.pop(index2) # /!\ operation lineaire
-            for shot in self.adj_pos[index][1] :
-                for (kk,ll) in self.shot[shot] :
-                    #supprimer l'arrete (kk,ll)->shot
-                    (found4, index4) = find(kk, ll)
-                    self.adj_pos[index4][2] = [(x,y) for (x,y) in self.adj_pos[index4][2] if (x!=kk and y!=ll)]
-                #supprimer ligne shot
-                self.shot.pop(shot)
-            #supprimer ligne (i,j)
-            self.adj_pos.pop(index)
-'''
