@@ -2,6 +2,7 @@
 import json
 import sys
 import pygame
+import time
 
 from createSol import *
 from solution import *
@@ -15,8 +16,11 @@ problem_path = sys.argv[1]
 with open(problem_path) as problem_file:
     problem = Problem(json.load(problem_file))
 
+tm = time.time()
 s = createSol(problem)
 s.create_graph()
+tm = time.time() - tm
+print("creation graph : ", tm, "s")
 for k in range(1,len(s.problem.opponents[0])*2+1):
     print(k)
     if len(sys.argv) == 3 :
