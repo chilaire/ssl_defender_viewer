@@ -11,7 +11,7 @@ class createSol :
         self.solution = []
 
     """
-    check if two position overlaps (real_position)
+    Check if two positions overlap (real_position)
     """
     def overlaps(self, pos1, pos2):
         d = sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
@@ -19,7 +19,7 @@ class createSol :
 
 
     """
-    Gets all the positions that intercepts a shot ()= segment from start_shot to end_shot)
+    Gets all the positions that intercept a shot (= segment from start_shot to end_shot)
     Returns a list of [i,j] that are grid_position
     """
     #hyp1 : start_shot and end_shot are real_position (!= grid_position)
@@ -51,8 +51,8 @@ class createSol :
 
     """
     Adds a position  pos (grid_position) as neighbour of a shot in the graph.
-    find all the position that could overlaps pos, to treat the case of overlapping
-    (if two position overlaps, they are neighbour).
+    Finds all the positions that could overlap pos, to treat the case of overlapping
+    (if two positions overlap, they are neighbours).
     """
     def add(self, pos, id_shot):
         (need_to_treat_overlapping, index) = self.graph.add_pos(pos[0], pos[1], id_shot)
@@ -87,7 +87,7 @@ class createSol :
 
     """
     Gets the solution found
-    Covert the solution in real_position
+    Converts the solution in real_position
     """
     def get_solution(self):
         if self.solution == []:
@@ -96,10 +96,10 @@ class createSol :
 
 
     """
-    Exact Algoritme :
+    Exact Algorithm :
     Finds an independent set of pos-vertices that dominates the shot-vertices
-    returns true and sets the solution with the index of the vertices in the solution if it finds it
-            false and set the solution empty otherwise
+    Returns true and sets the solution with the index of the vertices in the solution if it finds it
+         or false and sets the solution empty otherwise
     """
 #here the adjacencies list are index
     def dom_ind_set(self, k):
@@ -129,7 +129,7 @@ class createSol :
 
 
     """
-    appoximmate Algoritme
+    appoximate Algorithm
     """
     def dom_ind_set_glouton(self, k):
         #we get the best position with the heuristic
