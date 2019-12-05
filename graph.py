@@ -1,4 +1,7 @@
 import math
+from threading import RLock
+
+lock = RLock()
 
 class graph :
     def __init__(self):
@@ -73,11 +76,13 @@ class graph :
     """
     Add an edge between a position and each potentiel neighbours
     """
-    def add_pos_adja(self,ind_pos, pos, neighbours): #TODO: faire sans liste
+    def add_pos_adja(self,ind_pos, pos, neighbours):
+        #TODO: voir si on peut éviter de prendre un verrou pour toute la fonction
         for (i,j) in neighbours:
-            (found,index) = self.find(i,j)
-            if found:
-                self.add_edgePos(ind_pos, index, pos[0], pos[1], i, j)
+            with lock:
+                (found,index) = self.find(i,j)
+                if found:
+                    self.add_edgePos(ind_pos, index, pos[0], pos[1], i, j)
 
 
 

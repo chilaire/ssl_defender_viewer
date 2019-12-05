@@ -2,6 +2,24 @@ from graph import *
 from problem import *
 from math import sqrt, floor , pi
 from geometry import *
+from threading import Thread, RLock
+
+class Add_nei(Thread):
+
+    def __init__(self, grph, step, pos, index):
+        Thread.__init__(self)
+        self.g = grph
+        self.step = step
+        self.pos = pos
+        self.index = index
+
+    def run(self):
+        neighbours = []
+        for k in range (floor(-2*self.step), floor(2*self.step)):
+            for l in range (floor(-2*self.step), floor(2*self.step)):
+                if (k!=0 or l!=0) and k*k+l*l<= 4*self.step*self.step:
+                    neighbours.append((k+self.pos[0],l+self.pos[1]))
+        self.g.add_pos_adja(self.index, self.pos, neighbours)
 
 class createSol :
     def __init__(self, problem):
@@ -57,12 +75,10 @@ class createSol :
     def add(self, pos, id_shot):
         (need_to_treat_overlapping, index) = self.graph.add_pos(pos[0], pos[1], id_shot)
         if need_to_treat_overlapping :
-            neighbours = []
-            for k in range (floor(-2*self.step), floor(2*self.step)):
-                for l in range (floor(-2*self.step), floor(2*self.step)):
-                    if (k!=0 or l!=0) and k*k+l*l<= 4*self.step*self.step:
-                        neighbours.append((k+pos[0],l+pos[1]))
-            self.graph.add_pos_adja(index, pos, neighbours)
+            t = Add_nei(self.graph, self.step, pos, index)
+            t.start()
+            return t
+        return -1
 
     """
     Creates the graph.
@@ -73,6 +89,7 @@ class createSol :
             opp_pos = self.problem.getOpponent(opp_id)
             theta = 0
             while theta < 2*pi :
+                toWait = []
                 for goal in self.problem.goals :
                     kick_result = goal.kickResult(opp_pos, theta)
                     if not kick_result is None:
@@ -80,7 +97,11 @@ class createSol :
                         id_shot = self.graph.add_shot()
                         pos_to_add = self.intercept(opp_pos,kick_result)
                         for pos in pos_to_add :
-                            self.add(pos,id_shot)
+                            r=self.add(pos,id_shot)
+                            if r!= -1:
+                                toWait.append(r)
+                for t in toWait:
+                    t.join()
                 theta += self.problem.theta_step
         #now that G is finished and sorted, we convert the list of adjacencies
         self.graph.convert()
