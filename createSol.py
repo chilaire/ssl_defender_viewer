@@ -9,6 +9,8 @@ class createSol :
         self.graph = graph()
         self.step = problem.robot_radius / problem.pos_step
         self.solution = []
+        self.sol_inter = []
+        self.current_state = 0
 
     """
     Check if two positions overlap (real_position)
@@ -84,6 +86,7 @@ class createSol :
                 theta += self.problem.theta_step
         #now that G is finished and sorted, we convert the list of adjacencies
         self.graph.convert()
+        self.sol_inter = [None for _ in range(2**sel.graph.get_nb_shot()]
 
     """
     Gets the solution found
@@ -148,4 +151,37 @@ class createSol :
             return True
         self.graph.revive_vertex_and_neighbours(best_pos,k)
         self.solution.pop()
+        return False
+
+
+    def dom_ind_set_dyn(self, k):
+        #if there is no more shot-vertex -> we have found the solution S -> True
+        #else, we start from the neighbourhood of the first shot-vertex found
+        shot_neighbours = self.graph.get_first_shot_neighbourhood()
+        if shot_neighbours is None:
+            return True
+        #if k=0, no more defender to protect the shot found -> FALSE
+        if k==0:
+            return False
+        #for each neighbour ui of v :
+            #Gi = G\{ vi and its neighbours (pos and shot)}
+        #we stop at the first vi where dom_ind_set(k-1) on Gi is true
+        #   -> we can construct S with vi in S -> TRUE
+        for n in shot_neighbours:
+            (i,j) = self.graph.adj_pos[n][0]
+            self.solution.append((i,j))
+            self.graph.remove_vertex_and_neighbours(n,k)
+            self.current_state += 2**n
+            tmp = self.sol_inter[self.current_state]
+            if (tmp!=None and len(tmp)==k-1):
+                self.sol_inter[self.current_state -2**n] = [(i,j)] + tmp
+                return True
+            elif self.dom_ind_set(k-1) :
+                #TODO : update sol_inter
+                return True
+            sel.current_state -= 2**n
+            self.graph.revive_vertex_and_neighbours(n,k)
+            self.solution.pop()
+        #no neighbour or none can be in S
+        #   -> impossible to find S -> FALSE
         return False

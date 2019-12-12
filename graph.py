@@ -10,6 +10,9 @@ class graph :
         ### [pos neighbourhood] is a list of position (i',j') ###
         #########################################################
 
+    def get_nb_pos(self):
+        return len(self.adj_pos)
+
     """
     Adds a position in the sorted grah's adjacency list if it is not already in the graph
     return true if we need to treat the overlapping, false otherwise
