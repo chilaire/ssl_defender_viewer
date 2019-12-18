@@ -1,6 +1,6 @@
 from graph import *
 from problem import *
-from math import sqrt, floor , pi
+from math import sqrt, floor , ceil, pi
 from geometry import *
 import numpy as np
 
@@ -33,64 +33,65 @@ class createSol :
                 while theta < 2*pi :
                     kick_result = goal.kickResult(opp_pos, theta)
                     if not kick_result is None:
-                        self.striking_shots.append(kick_result)
+                        self.striking_shots.append((opp_pos, kick_result, theta))
                     theta += self.problem.theta_step
-
-    """
-    takes a real position and gives the grid indexes
-    """
-    def real_to_grid (self, x, y):
-        j = x - self.problem.field_limits[0][0]
-        i = y - self.problem.field_limits[1][0]
-        j += self.problem.robot_radius #a robot can be out as long as it is in contact with the line
-        i += self.problem.robot_radius
-        return ( int(floor(i/self.problem.pos_step)) , int(floor(j/self.problem.pos_step)) )
-
-    """
-    takes a grid indexes and gives the real position
-    """
-    def grid_to_real (self, i, j):
-        x = j*self.problem.pos_step + self.problem.field_limits[0][0] - self.problem.robot_radius
-        y = i*self.problem.pos_step + self.problem.field_limits[1][0] - self.problem.robot_radius
-        return ( x , y )
 
     """
     create position_grid : -2=forbiden -1=not in graph id=index in graph
     """
     def create_position_grid(self): #TODO:peut mieux faire !!!!!!
-        xmax = self.problem.field_limits[0][1] + self.problem.robot_radius
-        ymax = self.problem.field_limits[1][1] + self.problem.robot_radius
-        (N,M) = self.real_to_grid( xmax , ymax )
+        M = self.problem.field_limits[0][1] - self.problem.field_limits[0][0]#the center of the robot has to be in the field
+        N = self.problem.field_limits[1][1] - self.problem.field_limits[1][0]
+        (N,M) = ( int(floor(N/self.problem.pos_step)) , int(floor(N/self.problem.pos_step)) )
         self.position_grid = np.full((N+1,M+1),-1)
+        #get rid of all the positions tha overlap an opposent
         for opp_id in range(self.problem.getNbOpponents()):
             [xo,yo] = self.problem.getOpponent(opp_id)
-            (imin,jmin) = self.real_to_grid(xo-2*self.problem.robot_radius, yo-2*self.problem.robot_radius)
-            (imax,jmax) = (imin+2*self.offset+1,jmin+2*self.offset+1)
+            (imin,jmin) = ( ceil((yo-2*self.problem.robot_radius)/self.problem.pos_step), ceil((xo-2*self.problem.robot_radius)/self.problem.pos_step) )
+            (imax,jmax) = ( floor((yo+2*self.problem.robot_radius)/self.problem.pos_step), floor((xo+2*self.problem.robot_radius)/self.problem.pos_step) )
             for i in range(imin,min(imax+1,N)):
                 for j in range(jmin,min(jmax+1,M)):
                     if ( self.position_grid[i,j] == -1 ):
-                        (xd,yd) = self.grid_to_real(i,j)
+                        (xd,yd)= (j * self.problem.pos_step , i * self.problem.pos_step)
                         if self.overlaps([xd,yd], [xo,yo]):
                             self.position_grid[i,j] = -2
+        #idem with the pole of the goal
         for goal in self.problem.goals:
             [x1,x2] = goal.posts[0]
             [y1,y2] = goal.posts[1]
-            (imin1,jmin1) = self.real_to_grid(x1-self.problem.robot_radius, y1-self.problem.robot_radius)
-            (imax1,jmax1) = (imin1+self.offset+1,jmin1+self.offset+1)
-            (imin2,jmin2) = self.real_to_grid(x2-self.problem.robot_radius, y2-self.problem.robot_radius)
-            (imax2,jmax2) = (imin2+self.offset+1,jmin2+self.offset+1)
+            (imin1,jmin1) = ( ceil((y1-self.problem.robot_radius)/self.problem.pos_step), ceil((x1-self.problem.robot_radius)/self.problem.pos_step) )
+            (imax1,jmax1) = ( floor((y1+self.problem.robot_radius)/self.problem.pos_step), floor((x1+self.problem.robot_radius)/self.problem.pos_step) )
+            (imin2,jmin2) = ( ceil((y2-self.problem.robot_radius)/self.problem.pos_step), ceil((x2-self.problem.robot_radius)/self.problem.pos_step) )
+            (imax2,jmax2) = ( floor((y2+self.problem.robot_radius)/self.problem.pos_step), floor((x2+self.problem.robot_radius)/self.problem.pos_step) )
             for i in range(imin1,min(imax1+1,N)):
                 for j in range(jmin1,min(jmax1+1,M)):
                     if ( self.position_grid[i,j] == -1 ):
-                        (xd,yd) = self.grid_to_real(i,j)
+                        (xd,yd)= (j * self.problem.pos_step , i * self.problem.pos_step)
                         if (sqrt((xd - x1)**2 + (yd - y1)**2) < self.problem.robot_radius):
                             self.position_grid[i,j] = -2
             for i in range(imin2,min(imax2+1,N)):
                 for j in range(jmin2,min(jmax2+1,M)):
                     if ( self.position_grid[i,j] == -1 ):
-                        (xd,yd) = self.grid_to_real(i,j)
-                        if (sqrt((xd - x2)**2 + (yd - y2)**2) < self.problem.robot_radius):
+                        (xd,yd)= (j * self.problem.pos_step , i * self.problem.pos_step)
+                        if (sqrt((xd - x1)**2 + (yd - y1)**2) < self.problem.robot_radius):
                             self.position_grid[i,j] = -2
+
+
+    def range_in_grid_y(self, y0, y1):#TODO: un vrai nom
+        (i0,i1) = ( ceil((y0-self.problem.robot_radius)/self.problem.pos_step), floor((y1+self.problem.robot_radius)/self.problem.pos_step) )
+        if i0 * self.problem.robot_radius < self.problem.field_limits[1][0] :
+            i0 = ceil(self.problem.field_limits[1][0]/self.problem.pos_step)
+        if i1 * self.problem.robot_radius > self.problem.field_limits[1][1] :
+            i1 = floor(self.problem.field_limits[1][1]/self.problem.pos_step)
+        return (i0,i1)
+
+    def range_in_grid_x(self, x0, x1):#TODO: un vrai nom
+        (j0,j1) = ( ceil((x0-self.problem.robot_radius)/self.problem.pos_step), floor((x1+self.problem.robot_radius)/self.problem.pos_step) )
+        if j0 * self.problem.robot_radius < self.problem.field_limits[0][0] :
+            j0 = ceil(self.problem.field_limits[0][0]/self.problem.pos_step)
+        if j1 * self.problem.robot_radius > self.problem.field_limits[0][1] :
+            j1 = floor(self.problem.field_limits[0][1]/self.problem.pos_step)
+        return (j0,j1)
 
 
     """
@@ -143,18 +144,56 @@ class createSol :
     Finds all the positions that could overlap pos, to treat the case of overlapping
     (if two positions overlap, they are neighbours).
     """
-    """
-        def add_intercept(self, pos, shot): #exclure avant les -2
-            id_shot = self.graph.add_shot()
 
-            if self.grid_position[i,j]== -1: #need to treat overlappings
-                #ajouter le sommet
-                #traiter vois
-            else: #just add an edge between the pos and the shot
-                #ajouter le sommet
-    """
+    def add_intercept(self, pos, shot): #exclure avant les -2
+        ([x0,y0],[x1,y1],theta) = shot
+        id_shot = self.graph.add_shot()
+        if cos(theta) == 0: #TODO verfier
+            if y0 > y1:
+                (y0,y1) = (y1,y0)
+            if x0 > x1:
+                (x0,x1) = (x1,x0)
+            (i0,i1) = range_in_grid_y(self, y0, y1)
+            (j0,j1) = range_in_grid_x(self, x0, x1)
+            for j in range(j0, j1+1):
+                for i in range(i0, i1+1):
+                    if self.grid_position[i,j] != -2:
+                        self.add(i,j,id_shot)
+        else:
+            coef = tan(theta)
+            if abs(coef) < 1:
+                if x0 > x1:
+                    ([x0,y0],[x1,y1]) = ([x1,y1],[x0,y0])
+                (j0,j1) = range_in_grid_x(self, x0, x1)
+                for j in range(j0, j1+1):
+                    y = coef * j + y0
+                    (i0,i1) = range_in_grid_y(self, y, y)
+                    for i in range (i0, i1+1):
+                        if self.grid_position[i,j] != -2:
+                            self.add(i,j,id_shot)
+            else:
+                coef = 1/coef
+                if y0 > y1:
+                    ([x0,y0],[x1,y1]) = ([x1,y1],[x0,y0])
+                (i0,i1) = range_in_grid_y(self, y0, y1)
+                for i in range(i0, i1+1):
+                    x = coef * i + x0
+                    (j0,j1) = range_in_grid_y(self, x, x)
+                    for j in range (j0, j1+1):
+                        if self.grid_position[i,j] != -2:
+                            self.add(i,j,id_shot)
+            #chopper les pos qui peuvent intercepter le tir
 
 
+
+
+    def add(self, i, j, id_shot):#-2 éliminés
+        if self.grid_position[i,j]== -1: #need to treat overlappings
+            a=1
+                        #ajouter le sommet
+                        #traiter vois
+        #else: #just add an edge between the pos and the shot
+                        #ajouter le sommet
 
 
 
