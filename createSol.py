@@ -2,12 +2,15 @@ from graph import *
 from problem import *
 from math import sqrt, floor , pi
 from geometry import *
+import numpy as np
 
 class createSol :
     def __init__(self, problem):
         self.problem = problem
+        self.striking_shots = None
         self.graph = graph()
         self.step = problem.robot_radius / problem.pos_step
+        self.offset = int(floor( 2 * problem.robot_radius / problem.pos_step)) #nb d'indices max entre 2 positions de robots qui se touchent
         self.solution = []
 
     """
@@ -19,11 +22,81 @@ class createSol :
 
 
     """
+    Get the list of striking shots
+    """
+    def get_striking_shots(self):
+        self.striking_shots = []
+        for opp_id in range(self.problem.getNbOpponents()):
+            opp_pos = self.problem.getOpponent(opp_id)
+            for goal in self.problem.goals :
+                theta = 0    #TODO:calc theta1 theta2 = arctan(yg-ya/xg_xa) blabla
+                while theta < 2*pi :
+                    kick_result = goal.kickResult(opp_pos, theta)
+                    if not kick_result is None:
+                        self.striking_shots.append(kick_result)
+                    theta += self.problem.theta_step
+
+    """
+    takes a real position and gives the grid indexes
+    """
+    def real_to_grid (self, x, y):
+        j = x - self.problem.field_limits[0][0]
+        i = y - self.problem.field_limits[1][0]
+        j += self.problem.robot_radius #a robot can be out as long as it is in contact with the line
+        i += self.problem.robot_radius
+        return ( int(floor(i/self.problem.pos_step)) , int(floor(j/self.problem.pos_step)) )
+
+    """
+    takes a grid indexes and gives the real position
+    """
+    def grid_to_real (self, i, j):
+        x = j*self.problem.pos_step + self.problem.field_limits[0][0] - self.problem.robot_radius
+        y = i*self.problem.pos_step + self.problem.field_limits[1][0] - self.problem.robot_radius
+        return ( x , y )
+
+    """
+    create position_grid : -2=forbiden -1=not in graph id=index in graph
+    """
+    def create_position_grid(self): #TODO:peut mieux faire !!!!!!
+        xmax = self.problem.field_limits[0][1] + self.problem.robot_radius
+        ymax = self.problem.field_limits[1][1] + self.problem.robot_radius
+        (N,M) = self.real_to_grid( xmax , ymax )
+        self.position_grid = np.full((N+1,M+1),-1)
+        for opp_id in range(self.problem.getNbOpponents()):
+            [xo,yo] = self.problem.getOpponent(opp_id)
+            (imin,jmin) = self.real_to_grid(xo-2*self.problem.robot_radius, yo-2*self.problem.robot_radius)
+            (imax,jmax) = (imin+2*self.offset+1,jmin+2*self.offset+1)
+            for i in range(imin,min(imax+1,N)):
+                for j in range(jmin,min(jmax+1,M)):
+                    if ( self.position_grid[i,j] == -1 ):
+                        (xd,yd) = self.grid_to_real(i,j)
+                        if self.overlaps([xd,yd], [xo,yo]):
+                            self.position_grid[i,j] = -2
+        for goal in self.problem.goals:
+            [x1,x2] = goal.posts[0]
+            [y1,y2] = goal.posts[1]
+            (imin1,jmin1) = self.real_to_grid(x1-self.problem.robot_radius, y1-self.problem.robot_radius)
+            (imax1,jmax1) = (imin1+self.offset+1,jmin1+self.offset+1)
+            (imin2,jmin2) = self.real_to_grid(x2-self.problem.robot_radius, y2-self.problem.robot_radius)
+            (imax2,jmax2) = (imin2+self.offset+1,jmin2+self.offset+1)
+            for i in range(imin1,min(imax1+1,N)):
+                for j in range(jmin1,min(jmax1+1,M)):
+                    if ( self.position_grid[i,j] == -1 ):
+                        (xd,yd) = self.grid_to_real(i,j)
+                        if (sqrt((xd - x1)**2 + (yd - y1)**2) < self.problem.robot_radius):
+                            self.position_grid[i,j] = -2
+            for i in range(imin2,min(imax2+1,N)):
+                for j in range(jmin2,min(jmax2+1,M)):
+                    if ( self.position_grid[i,j] == -1 ):
+                        (xd,yd) = self.grid_to_real(i,j)
+                        if (sqrt((xd - x2)**2 + (yd - y2)**2) < self.problem.robot_radius):
+                            self.position_grid[i,j] = -2
+
+
+    """
     Gets all the positions that intercept a shot (= segment from start_shot to end_shot)
     Returns a list of [i,j] that are grid_position
-    """
-    #hyp1 : start_shot and end_shot are real_position (!= grid_position)
-    #hyp2 : the shot starts and ends inside the field
+
     def intercept(self, start_shot, end_shot):
         ret = []
         i_min = int(floor( (min(start_shot[0], end_shot[0]) - self.problem.robot_radius) / self.problem.pos_step))
@@ -48,12 +121,13 @@ class createSol :
                     if add:
                         ret.append([i,j])
         return ret
+    """
 
     """
     Adds a position  pos (grid_position) as neighbour of a shot in the graph.
     Finds all the positions that could overlap pos, to treat the case of overlapping
     (if two positions overlap, they are neighbours).
-    """
+
     def add(self, pos, id_shot):
         (need_to_treat_overlapping, index) = self.graph.add_pos(pos[0], pos[1], id_shot)
         if need_to_treat_overlapping :
@@ -62,28 +136,42 @@ class createSol :
                 for l in range (floor(-2*self.step), floor(2*self.step)):
                     if (k!=0 or l!=0) and k*k+l*l<= 4*self.step*self.step:
                         neighbours.append((k+pos[0],l+pos[1]))
-            self.graph.add_pos_adja(index, pos, neighbours)
+            self.graph.add_pos_adja(index, pos, neighbours)"""
+
+    """
+    Adds a position  pos (grid_position) as neighbour of a shot in the graph.
+    Finds all the positions that could overlap pos, to treat the case of overlapping
+    (if two positions overlap, they are neighbours).
+    """
+    """
+        def add_intercept(self, pos, shot): #exclure avant les -2
+            id_shot = self.graph.add_shot()
+
+            if self.grid_position[i,j]== -1: #need to treat overlappings
+                #ajouter le sommet
+                #traiter vois
+            else: #just add an edge between the pos and the shot
+                #ajouter le sommet
+    """
+
+
+
+
+
+
 
     """
     Creates the graph.
     """
     def create_graph(self):
-        #we find all the shot drawn by opponents that might strike
-        for opp_id in range(self.problem.getNbOpponents()):
-            opp_pos = self.problem.getOpponent(opp_id)
-            theta = 0
-            while theta < 2*pi :
-                for goal in self.problem.goals :
-                    kick_result = goal.kickResult(opp_pos, theta)
-                    if not kick_result is None:
-                        # we add in G a shot-vertex, and a pos-vertex for each position that intercept the shot
-                        id_shot = self.graph.add_shot()
-                        pos_to_add = self.intercept(opp_pos,kick_result)
-                        for pos in pos_to_add :
-                            self.add(pos,id_shot)
-                theta += self.problem.theta_step
-        #now that G is finished and sorted, we convert the list of adjacencies
-        self.graph.convert()
+        self.get_striking_shots()
+        self.create_position_grid()
+        for shot in striking_shots:
+            id_shot = self.graph.add_shot()
+            pos_to_add = self.intercept(opp_pos,shot)
+            for pos in pos_to_add :
+                self.add(pos,id_shot)
+
 
     """
     Gets the solution found
@@ -92,7 +180,7 @@ class createSol :
     def get_solution(self):
         if self.solution == []:
             return None
-        return [[x*self.problem.pos_step,y*self.problem.pos_step] for (x,y) in self.solution]
+        return [self.grid_to_real(i,j) for (i,j) in self.solution]
 
 
     """
