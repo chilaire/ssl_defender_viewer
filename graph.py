@@ -2,30 +2,31 @@ import math
 
 class graph :
     def __init__(self):
-        self.adj_pos    = [] #liste de [(i,j),[shot neighbourhood (index)],[pos neighbourhood ((i',j') then index)],"removed at round k"]
-        self.shot       = []#liste de [[pos neighbourhood ((i',j') then index)],"removed at round k"]
-
-
-        #########################################################
-        ### [pos neighbourhood] is a list of position (i',j') ###
-        #########################################################
+        self.adj_pos    = [] #list of [(i,j),[shot neighbourhood (index)],[pos neighbourhood (index)],"removed at round k" (bool)]
+        self.shot       = [] #list of [[pos neighbourhood (index)],"removed at round k"(bool)]
 
     """
-    Adds a position in the sorted grah's adjacency list if it is not already in the graph
-    return true if we need to treat the overlapping, false otherwise
-    and the index of the pos in the graph
+    Returns the number of position_verticices in the graph
     """
-    #if the position was already in the graph, the overlapping has already been treated
-    def add_pos(self,i, j, id_shot):
-        self.shot[id_shot][0].append((i,j))
-        (found,index) = self.find(i, j)
-        if not found:
-            self.adj_pos.insert(index, [(i,j), [], [], -1])
-        self.adj_pos[index][1].append(id_shot)
-        return (not found, index)
+    def get_nb_pos(self):
+        return len(self.adj_pos)
 
     """
-    Creates a shot and returns its index (no edge yet)
+    Return the grid_position of a position_vertex
+    """
+    def pos_in_grid(self,index):
+        return self.adj_pos[index][0]
+
+    """
+    Create a position_vertex in the graph's adjacency list if it is not already in the graph
+    return the index of the pos in the graph (no eges yet)
+    """
+    def add_pos(self,i, j, idShot):
+        self.adj_pos.append([(i,j), [], [], -1])
+        return len(self.adj_pos)-1
+
+    """
+    Creates a shot_vertex and returns its index (no edge yet)
     """
     def add_shot(self,): #modified
         self.shot.append([[], -1])
@@ -33,84 +34,24 @@ class graph :
 
 
     """
-    Add edge between two positions
+    Add edge between two position_vertex
     """
-    def add_edgePos(self,index1, index2, i, j, k, l):
-        self.adj_pos[index1][2].append( (k, l) )
-        self.adj_pos[index2][2].append( (i, j) )
-
-    """
-    Find the index of the pos (i,j)
-    Returns true and its index if the pos is already in the graph
-            false and the position where it should be inserted
-    """
-    def find(self, i, j):
-        if self.adj_pos == []:
-            return (False, 0)
-        start = 0
-        end = len(self.adj_pos)-1
-        if self.adj_pos[end][0] < (i,j):
-            return (False, end+1)
-        if self.adj_pos[start][0] == (i,j):
-            return (True, start)
-        if self.adj_pos[end][0] == (i,j):
-            return (True, end)
-        while end-start > 1:
-            middle = start + (end-start)//2
-            if self.adj_pos[middle][0] == (i,j):
-                return (True, middle)
-            else:
-                if self.adj_pos[middle][0][0] < i:
-                    start = middle
-                elif self.adj_pos[middle][0][0] > i:
-                    end = middle
-                elif self.adj_pos[middle][0][1] < j:
-                    start = middle
-                else:
-                    end = middle
-        return (False, end)
-
-    """
-    Add an edge between a position and each potentiel neighbours
-    """
-    def add_pos_adja(self,ind_pos, pos, neighbours): #TODO: faire sans liste
-        for (i,j) in neighbours:
-            (found,index) = self.find(i,j)
-            if found:
-                self.add_edgePos(ind_pos, index, pos[0], pos[1], i, j)
+    def add_edge_pos(self,index1, index2):
+        self.adj_pos[index1][2].append( index2 )
+        self.adj_pos[index2][2].append( index1 )
 
 
+    """
+    Add edge between a position_vetex and a shot_vertex
+    """
+    def add_edge_shot(self,indexPos, idShot):
+        self.adj_pos[indexPos][1].append( idShot )
+        self.shot[idShot][0].append( indexPos )
 
 
 
     """
-    Converts the adjacency lists of position (initially list of (i',j')) in a list of index
-    """
-    def convert(self):
-        for index in range(len(self.adj_pos)):
-            (i,j) = self.adj_pos[index][0]
-            for p in range(len(self.adj_pos)):
-                pos = self.adj_pos[p]
-                for k in range(len(pos[2])):
-                    if pos[2][k] == (i,j):
-                        pos[2][k] = index
-            for s in self.adj_pos[index][1]:
-                shot = self.shot[s]
-                for k in range(len(shot[0])):
-                    if shot[0][k] == (i,j):
-                        shot[0][k] = index
-
-
-
-
-
-
-        #########################################################
-        ### [pos neighbourhood] is a list of index of position###
-        #########################################################
-
-    """
-    Gets the neighbourhood (position not removed) of the first not removed shot.
+    Gets the neighbourhood (position_vertex not removed) of the first not removed shot.
     Returns the neighbourhood or None if no shot is found
     """
     def get_first_shot_neighbourhood(self):
@@ -120,7 +61,7 @@ class graph :
         return None
 
     """
-    Gets the position with the more shot-neighbours, neighbour of the shot with fewer neighbours
+    Gets the position_vertex with the most shot-neighbours, neighbour of the shot_vertex with the least neighbours
     (considering only non removed elements).
     Returns (position,True) if the position is found
             (None, True) if a shot with no neighbour is found

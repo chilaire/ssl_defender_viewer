@@ -23,9 +23,14 @@ s = createSol(problem)
 s.get_striking_shots()
 print(s.striking_shots)
 s.create_position_grid()
-print(s.position_grid)
-'''
+
 s.create_graph()
+print(s.position_grid)
+for p in range(len(s.graph.adj_pos)):
+    print(s.graph.adj_pos[p])
+for p in range(len(s.graph.shot)):
+    print(s.graph.shot[p])
+
 tm = time.time() - tm
 print("creation graph : ", tm, "s")
 for k in range(1,len(s.problem.opponents[0])*2+1):
@@ -57,5 +62,5 @@ if solutionPb != None :
 
     b = Board(problem, solution)
     b.run()
-'''
+
 sys.exit()
