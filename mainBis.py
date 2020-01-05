@@ -20,35 +20,39 @@ with open(problem_path) as problem_file:
 
 tm = time.time()
 s = createSol(problem)
-s.get_striking_shots()
+possible = s.create_graph()
+"""
 print(s.striking_shots)
-s.create_position_grid()
-
-s.create_graph()
 print(s.position_grid)
+print("")
 for p in range(len(s.graph.adj_pos)):
     print(s.graph.adj_pos[p])
+print("")
 for p in range(len(s.graph.shot)):
     print(s.graph.shot[p])
-
+"""
 tm = time.time() - tm
 print("creation graph : ", tm, "s")
-for k in range(1,len(s.problem.opponents[0])*2+1):
-    print(k)
-    if len(sys.argv) == 3 :
-        if sys.argv[2].lower() == "greedy" :
-            print("Executing greedy method...")
-            if s.dom_ind_set_glouton(k):
-                break
+tm = time.time()
+if possible :
+    for k in range(1,len(s.problem.opponents[0])*2+1):
+        print(k)
+        if len(sys.argv) == 3 :
+            if sys.argv[2].lower() == "greedy" :
+                print("Executing greedy method...")
+                if s.dom_ind_set_glouton(k):
+                    break
+            else :
+                print("Executing exact method...")
+                if s.dom_ind_set(k):
+                    break
         else :
             print("Executing exact method...")
             if s.dom_ind_set(k):
                 break
-    else :
-        print("Executing exact method...")
-        if s.dom_ind_set(k):
-            break
 
+tm = time.time() - tm
+print("solving : ", tm, "s")
 solutionPb = s.get_solution()
 print("solution :",solutionPb)
 
