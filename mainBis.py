@@ -9,61 +9,46 @@ from solution import *
 from board import *
 
 if (len(sys.argv) < 2) :
-    sys.exit("Usage: " + sys.argv[0] + " <problem.json>" + " (greedy \ exact)" + " default case:exact")
+    sys.exit("Usage: " + sys.argv[0] + " <problem.json>" + " [-greedy] (to use greedy aglo, exact algo by default)")
 
 problem_path = sys.argv[1]
 
 with open(problem_path) as problem_file:
     problem = Problem(json.load(problem_file))
 
-
-
 tm = time.time()
 s = createSol(problem)
 possible = s.create_graph()
-"""
-print(s.striking_shots)
-print(s.position_grid)
-print("")
-for p in range(len(s.graph.adj_pos)):
-    print(s.graph.adj_pos[p])
-print("")
-for p in range(len(s.graph.shot)):
-    print(s.graph.shot[p])
-"""
 tm = time.time() - tm
 print("creation graph : ", tm, "s")
+
 tm = time.time()
 if possible :
-    for k in range(1,len(s.problem.opponents[0])*2+1):
-        print(k)
-        if len(sys.argv) == 3 :
-            if sys.argv[2].lower() == "greedy" :
-                print("Executing greedy method...")
-                if s.dom_ind_set_glouton(k):
-                    break
-            else :
-                print("Executing exact method...")
-                if s.dom_ind_set(k):
-                    break
-        else :
-            print("Executing exact method...")
-            if s.dom_ind_set(k):
+    if len(sys.argv) == 3 and sys.argv[2].lower() == "greedy" :
+        print("Executing greedy method...")
+        for k in range(len(s.problem.opponents[0])*100+1):
+            print(k, " defenders")
+            if s.dom_ind_set_glouton(k):
                 break
+    else :
+        print("Executing exact method...")
+        k = 0
+        while not s.dom_ind_set(k):
+            print(k , " defenders")
+            k+=1
 
 tm = time.time() - tm
 print("solving : ", tm, "s")
+
+
 solutionPb = s.get_solution()
 print("solution :",solutionPb)
 
 if solutionPb != None :
-
     x = {
         "defenders" : solutionPb
     }
     solution = Solution(x)
-
-
     b = Board(problem, solution)
     b.run()
 

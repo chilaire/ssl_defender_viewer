@@ -8,7 +8,7 @@ class createSol :
     def __init__(self, problem):
         self.problem = problem
         self.striking_shots = None
-        self.index_lim = np.full((2,2),0)
+        self.index_lim = ((0,0),(0,0))
         self.grid = None
         self.graph = graph()
         self.solution = []
@@ -30,7 +30,7 @@ class createSol :
     """
     def range_in_grid_y(self, y0, y1, radius):
         (i0,i1) = ( int(ceil((y0-radius)/self.step)), int(floor((y1+radius)/self.step)) )
-        [imin,imax] = self.index_lim[0]
+        (imin,imax) = self.index_lim[0]
         return (max(i0,imin),min(i1,imax))
     """
     Given two abscissas (x0 <= x1) and a radius, returns the range of indexes [j0,j1]
@@ -38,7 +38,7 @@ class createSol :
     """
     def range_in_grid_x(self, x0, x1, radius):
         (j0,j1) = ( int(ceil((x0-radius)/self.step)), int(floor((x1+radius)/self.step)) )
-        [jmin,jmax] = self.index_lim[1]
+        (jmin,jmax) = self.index_lim[1]
         return (max(j0,jmin),min(j1,jmax))
 
     """
@@ -47,9 +47,9 @@ class createSol :
     """
     def get_striking_shots(self):
         self.striking_shots = []
+        theta_range = [0,2*pi]
         for opp_id in range(self.problem.getNbOpponents()):
             opp_pos = self.problem.getOpponent(opp_id)
-            theta_range = [0,2*pi]
             for goal in self.problem.goals :
                 """for k in range(2):
                     x=opp_pos[0]-goal.posts[0,k]
@@ -96,20 +96,24 @@ class createSol :
         ilimMax = int(floor((self.problem.field_limits[1][1]+self.radius)/self.step))
         jlimMin = int(ceil((self.problem.field_limits[0][0]-self.radius)/self.step))
         jlimMax = int(floor((self.problem.field_limits[0][1]+self.radius)/self.step))
-        self.index_lim = [[ilimMin,ilimMax],[jlimMin,jlimMax]]
+        self.index_lim = ((ilimMin,ilimMax),(jlimMin,jlimMax))
         (N,M) = ( ilimMax - ilimMin , jlimMax - jlimMin )
         self.grid = np.full((N+1,M+1),-1)
         #get rid of all the positions that overlap an opposent
         for opp_id in range(self.problem.getNbOpponents()):
+            if self.problem.min_dist is None :
+                min_dist = self.radius
+            else :
+                min_dist = self.problem.min_dist / 2
             [xo,yo] = self.problem.getOpponent(opp_id)
-            (imin,imax) = self.range_in_grid_y(yo, yo, 2*self.radius)
-            (jmin,jmax) = self.range_in_grid_x(xo, xo, 2*self.radius)
+            (imin,imax) = self.range_in_grid_y(yo, yo, 2*min_dist)
+            (jmin,jmax) = self.range_in_grid_x(xo, xo, 2*min_dist)
             for i in range(imin,imax+1):
                 for j in range(jmin,jmax+1):
                     if ( self.grid[i,j] == -1 ):
                         (xd,yd)= (j * self.step , i * self.step)
                         d = sqrt((xd - xo)**2 + (yd - yo)**2)
-                        if d < 2*self.radius:
+                        if d < 2*min_dist:
                             self.grid[i,j] = -2
         #idem with the pole of the goal
         for goal in self.problem.goals:
@@ -192,16 +196,16 @@ class createSol :
     Adds an edge between all the grid_position in the graph that overlaps
     For every grid_position p in the graph, we look for the neighbor in the semi-circle under the position
     """
-    def treat_overlapping(self):
+    def treat_overlapping(self, min_dist):
         (imax,jmin,jmax) = (self.index_lim[0][1],self.index_lim[1][0],self.index_lim[1][1])
         for p in range (self.graph.get_nb_pos()):
             (ip,jp) = self.graph.pos_in_grid(p)
-            offset_i = int(floor( 2 * self.radius / self.step))
+            offset_i = int(floor( 2 * min_dist / self.step))
             offset_i =  min( offset_i, (imax - ip))
             for k in range( offset_i+1 ):
                 i = ip + k
                 tmp = k*k*self.step*self.step
-                tmp = sqrt(4*self.radius*self.radius - tmp)
+                tmp = sqrt(4*min_dist*min_dist - tmp)
                 j1 = min (int(floor((jp*self.step + tmp)/self.step)), jmax)
                 j0 = max (int(ceil((jp*self.step - tmp)/self.step)), jmin)
                 for j in range(j0,j1+1):
@@ -220,7 +224,26 @@ class createSol :
             interceptable = self.add_intercept(shot)
             if not interceptable:
                 return False
-        self.treat_overlapping()
+
+        if self.problem.min_dist is None :
+            min_dist = self.radius
+        else :
+            min_dist = self.problem.min_dist / 2
+        self.treat_overlapping(min_dist)
+
+        if not self.problem.goalkeeper_area is None:
+            [[x0,x1],[y0,y1]] = self.problem.goalkeeper_area
+            if x0 > x1 :
+                (x0,x1) = (x1,x0)
+            if y0 > y1 :
+                (y0,y1) = (y1,y0)
+            (i0,i1) = self.range_in_grid_y(y0, x1, -self.radius)
+            (j0,j1) = self.range_in_grid_x(x0, x1, -self.radius)
+            self.graph.goalkeeper_area = ((i0,i1),(j0,j1))
+            for p in range (self.graph.get_nb_pos()):
+                (i,j) = self.graph.pos_in_grid(p)
+                if i>=i0 and i<=i1 and j>=j0 and j<=j1 :
+                    self.graph.goalkeeper_position.append(p)
         return True
 
 
