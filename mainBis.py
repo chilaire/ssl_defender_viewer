@@ -8,7 +8,7 @@ from solution import *
 from board import *
 
 if (len(sys.argv) < 2) :
-    sys.exit("Usage: " + sys.argv[0] + " <problem.json>" + " (greedy \ exact)" + " default case:exact")
+    sys.exit("Usage: " + sys.argv[0] + " <problem.json>" + " (greedy \ exact \ dynamic)" + " default case:exact")
 
 problem_path = sys.argv[1]
 
@@ -23,6 +23,10 @@ for k in range(1,len(s.problem.opponents[0])*2+1):
         if sys.argv[2].lower() == "greedy" :
             print("Executing greedy method...")
             if s.dom_ind_set_glouton(k):
+                break
+        elif sys.argv[2].lower() == "dynamic" :
+            print("Executing dynamic method...")
+            if s.dom_ind_set_dyn(k):
                 break
         else :
             print("Executing exact method...")

@@ -86,7 +86,6 @@ class createSol :
                 theta += self.problem.theta_step
         #now that G is finished and sorted, we convert the list of adjacencies
         self.graph.convert()
-        self.sol_inter = [None for _ in range(2**sel.graph.get_nb_shot()]
 
     """
     Gets the solution found
@@ -154,6 +153,10 @@ class createSol :
         return False
 
 
+    """
+    trash algorithm
+    """
+    """
     def dom_ind_set_dyn(self, k):
         #if there is no more shot-vertex -> we have found the solution S -> True
         #else, we start from the neighbourhood of the first shot-vertex found
@@ -179,9 +182,18 @@ class createSol :
             elif self.dom_ind_set(k-1) :
                 #TODO : update sol_inter
                 return True
-            sel.current_state -= 2**n
+            self.current_state -= 2**n
             self.graph.revive_vertex_and_neighbours(n,k)
             self.solution.pop()
         #no neighbour or none can be in S
         #   -> impossible to find S -> FALSE
         return False
+    """
+
+    def dom_ind_set_dyn(self, k):
+        print(self.graph.get_nb_pos()*2**self.graph.get_nb_shot())
+        self.sol_inter = [[[]]+[None for _ in range(2**(self.graph.get_nb_shot()+1)-1)] for _ in range(self.graph.get_nb_pos())]
+        for i in range(1, self.graph.get_nb_pos()):
+            for j in range(2**(self.graph.get_nb_shot()+1)):
+                hash1 = self.graph.get_adja_hash(i, j)
+                self.sol_inter[i][j] = min(len(self.sol_inter[i-1][hash1])+1 < len(self.sol_inter[i-1][j]))

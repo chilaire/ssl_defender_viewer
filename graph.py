@@ -13,6 +13,16 @@ class graph :
     def get_nb_pos(self):
         return len(self.adj_pos)
 
+    def get_nb_shot(self):
+        return len(self.shot)
+
+    def get_adja_hash(self, pos, set):
+        ret = set
+        for i in self.adj_pos[pos][1]:
+            if (int(math.log2(ret-2**i)) == math.log2(ret-2**i)):
+                ret -= 2**i
+        return ret
+
     """
     Adds a position in the sorted grah's adjacency list if it is not already in the graph
     return true if we need to treat the overlapping, false otherwise
