@@ -14,6 +14,9 @@ class createSol :
         self.solution = []
         self.step = self.problem.pos_step
         self.radius = self.problem.robot_radius
+        self.min_dist = self.problem.min_dist
+        if (self.min_dist is None) :
+            self.min_dist = 2*self.problem.robot_radius
 
     """
     Gets the solution found.
@@ -101,19 +104,15 @@ class createSol :
         self.grid = np.full((N+1,M+1),-1)
         #get rid of all the positions that overlap an opposent
         for opp_id in range(self.problem.getNbOpponents()):
-            if self.problem.min_dist is None :
-                min_dist = self.radius
-            else :
-                min_dist = self.problem.min_dist / 2
             [xo,yo] = self.problem.getOpponent(opp_id)
-            (imin,imax) = self.range_in_grid_y(yo, yo, 2*min_dist)
-            (jmin,jmax) = self.range_in_grid_x(xo, xo, 2*min_dist)
+            (imin,imax) = self.range_in_grid_y(yo, yo, self.min_dist)
+            (jmin,jmax) = self.range_in_grid_x(xo, xo, self.min_dist)
             for i in range(imin,imax+1):
                 for j in range(jmin,jmax+1):
                     if ( self.grid[i,j] == -1 ):
                         (xd,yd)= (j * self.step , i * self.step)
                         d = sqrt((xd - xo)**2 + (yd - yo)**2)
-                        if d < 2*min_dist:
+                        if d < self.min_dist:
                             self.grid[i,j] = -2
         #idem with the pole of the goal
         for goal in self.problem.goals:
@@ -196,16 +195,16 @@ class createSol :
     Adds an edge between all the grid_position in the graph that overlaps
     For every grid_position p in the graph, we look for the neighbor in the semi-circle under the position
     """
-    def treat_overlapping(self, min_dist):
+    def treat_overlapping(self):
         (imax,jmin,jmax) = (self.index_lim[0][1],self.index_lim[1][0],self.index_lim[1][1])
         for p in range (self.graph.get_nb_pos()):
             (ip,jp) = self.graph.pos_in_grid(p)
-            offset_i = int(floor( 2 * min_dist / self.step))
+            offset_i = int(floor( self.min_dist / self.step))
             offset_i =  min( offset_i, (imax - ip))
             for k in range( offset_i+1 ):
                 i = ip + k
                 tmp = k*k*self.step*self.step
-                tmp = sqrt(4*min_dist*min_dist - tmp)
+                tmp = sqrt(self.min_dist*self.min_dist - tmp)
                 j1 = min (int(floor((jp*self.step + tmp)/self.step)), jmax)
                 j0 = max (int(ceil((jp*self.step - tmp)/self.step)), jmin)
                 for j in range(j0,j1+1):
@@ -224,12 +223,7 @@ class createSol :
             interceptable = self.add_intercept(shot)
             if not interceptable:
                 return False
-
-        if self.problem.min_dist is None :
-            min_dist = self.radius
-        else :
-            min_dist = self.problem.min_dist / 2
-        self.treat_overlapping(min_dist)
+        self.treat_overlapping()
 
         if not self.problem.goalkeeper_area is None:
             [[x0,x1],[y0,y1]] = self.problem.goalkeeper_area
@@ -259,25 +253,31 @@ class createSol :
         #else, we start from the neighbourhood of the first shot-vertex found
         shot_neighbours = self.graph.get_first_shot_neighbourhood()
         if shot_neighbours is None:
-            return True
+            return (True, True)
         #if k=0, no more defender to protect the shot found -> FALSE
         if k==0:
-            return False
+            if len(shot_neighbours) == 0 :
+                return (False, False)
+            else:
+                return (False, True)
         #for each neighbour ui of v :
             #Gi = G\{ vi and its neighbours (pos and shot)}
         #we stop at the first vi where dom_ind_set(k-1) on Gi is true
         #   -> we can construct S with vi in S -> TRUE
+        possible = False
         for n in shot_neighbours:
             (i,j) = self.graph.adj_pos[n][0]
             self.solution.append((i,j))
             self.graph.remove_vertex_and_neighbours(n,k)
-            if self.dom_ind_set(k-1) :
-                return True
+            (found_sol ,possible_succ) = self.dom_ind_set(k-1)
+            possible = possible or possible_succ #as soon as 1 succ is true, says it is possible it is still possible here
+            if  found_sol:
+                return (True, possible)
             self.graph.revive_vertex_and_neighbours(n,k)
             self.solution.pop()
         #no neighbour or none can be in S
         #   -> impossible to find S -> FALSE
-        return False
+        return (False, possible)
 
 
     """
@@ -288,16 +288,17 @@ class createSol :
         #       and a bool that says if there is a shot to dominates
         (best_pos,found_shot) = self.graph.get_heuristic_pos()
         if not found_shot : #no shot to cover anymore => found S
-            return True
-        if k==0:
-            return False
+            return (True,True)
         if best_pos == None :#there is a shot but no position can protect it => fail
-            return False
+            return (False,False)
+        if k==0:
+            return (False,True)
         (i,j) = self.graph.adj_pos[best_pos][0]
         self.solution.append((i,j))
         self.graph.remove_vertex_and_neighbours(best_pos,k)
-        if self.dom_ind_set_glouton(k-1) :
-            return True
+        (found, possible) = self.dom_ind_set_glouton(k-1)
+        if found :
+            return (True, possible)
         self.graph.revive_vertex_and_neighbours(best_pos,k)
         self.solution.pop()
-        return False
+        return (False,possible)

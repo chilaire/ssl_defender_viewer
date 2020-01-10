@@ -9,7 +9,7 @@ from solution import *
 from board import *
 
 if (len(sys.argv) < 2) :
-    sys.exit("Usage: " + sys.argv[0] + " <problem.json>" + " [-greedy] (to use greedy aglo, exact algo by default)")
+    sys.exit("Usage: " + sys.argv[0] + " <problem.json>" + " [greedy] (to use greedy aglo, exact algo by default)")
 
 problem_path = sys.argv[1]
 
@@ -23,19 +23,26 @@ tm = time.time() - tm
 print("creation graph : ", tm, "s")
 
 tm = time.time()
+
 if possible :
     if len(sys.argv) == 3 and sys.argv[2].lower() == "greedy" :
         print("Executing greedy method...")
-        for k in range(len(s.problem.opponents[0])*100+1):
-            print(k, " defenders")
-            if s.dom_ind_set_glouton(k):
-                break
+        k = 0
+        print(k , " defenders")
+        (found,possible) = s.dom_ind_set_glouton(k)
+        while possible and not found:
+            k+=1
+            print(k , " defenders")
+            (found,possible) = s.dom_ind_set_glouton(k)
     else :
         print("Executing exact method...")
         k = 0
-        while not s.dom_ind_set(k):
-            print(k , " defenders")
+        print(k , " defenders")
+        (found,possible) = s.dom_ind_set(k)
+        while possible and not found:
             k+=1
+            print(k , " defenders")
+            (found,possible) = s.dom_ind_set(k)
 
 tm = time.time() - tm
 print("solving : ", tm, "s")
@@ -43,6 +50,8 @@ print("solving : ", tm, "s")
 
 solutionPb = s.get_solution()
 print("solution :",solutionPb)
+if not possible:
+    print ("impossible")
 
 if solutionPb != None :
     x = {
